@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Base64
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -95,27 +96,6 @@ class MainActivity : ComponentActivity() {
                 finalInit()
             })
         }
-
-
-    private fun setServerKey() {
-
-        requestServer.requestGet2(Urls.publicKeyUrl, {
-            errorState(it)
-        }) {
-            when (it.code) {
-                200 -> {
-                    val data = requestServer.getResponse(it)
-                    requestServer.login.setServerKey(MyJson.MyJson.decodeFromString(data))
-                    init()
-                }
-
-                else -> {
-                    errorState("خطا عند تحديث البيانات الخاصة")
-                }
-            }
-        }
-    }
-
     private fun initDeviceInServer() {
         body = MultipartBody.Builder().setType(MultipartBody.FORM)
             .addFormDataPart("data1", requestServer.getData1().toString()).build()
@@ -136,7 +116,6 @@ class MainActivity : ComponentActivity() {
                 }
         }
     }
-
     private fun refreshLoginToken() {
         body = MultipartBody.Builder().setType(MultipartBody.FORM)
             .addFormDataPart("data1", requestServer.getData1().toString())
@@ -146,26 +125,11 @@ class MainActivity : ComponentActivity() {
         requestServer.request2(body, Urls.refreshToken, { _, it ->
             errorState(it)
         }) {
-            var decryptResult: String = "";
-            try {
-                val encryptedData = MyJson.MyJson.decodeFromString<EncryptedModel>(it)
-                decryptResult = requestServer.decryptData(
-                    Base64.decode(
-                        encryptedData.encrypted_data,
-                        Base64.DEFAULT
-                    )
-                )
-            } catch (e: Exception) {
-                errorState("حدث خطأ عند فك التشفير")
-            }
-
-            val token = MyJson.MyJson.decodeFromString<SuccessModel>(decryptResult)
-            requestServer.login.setLoginToken(MyJson.MyJson.encodeToString(token))
+            requestServer.login.setLoginToken(it)
             gotoDashboard()
         }
 
     }
-
     private fun errorState(it: String) {
         stateController.isLoadingRead.value = false
         stateController.isErrorRead.value = true
@@ -217,11 +181,7 @@ class MainActivity : ComponentActivity() {
 
     private fun finalInit() {
         stateController.isLoadingRead.value = true
-        if (requestServer.login.isSetServerKey()) {
-            init()
-        } else {
-            setServerKey()
-        }
+        init()
     }
 }
 

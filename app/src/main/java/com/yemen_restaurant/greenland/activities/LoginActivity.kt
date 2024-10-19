@@ -89,16 +89,9 @@ class LoginActivity : ComponentActivity() {
                 put("inputUserPhone",  phone.value.trim())
                 put("inputUserPassword", password.value.trim())
             }
-            var encryptedUserData = requestServer.encryptData(
-                MyJson.MyJson.encodeToString(text),
-                (login.getServerKey())
-            )
-            val data2 = encryptedUserData
-
-
             val body = MultipartBody.Builder().setType(MultipartBody.FORM)
                 .addFormDataPart("data1", requestServer.getData1().toString())
-                .addFormDataPart("data2", data2.toString())
+                .addFormDataPart("data2", text.toString())
                 .build()
 
             requestServer.request2(body, Urls.loginUrl, { code, it ->
@@ -115,30 +108,7 @@ class LoginActivity : ComponentActivity() {
                 isError.value = true
                 error.value = it
             }) { res ->
-                Log.e("erreerooor123", res)
-                var decryptResult: String = "";
-                try {
-                    val encryptedData = MyJson.IgnoreUnknownKeys.decodeFromString<EncryptedModel>(res)
-                    Log.e("erreerooor", encryptedData.encrypted_data)
-                    decryptResult = requestServer.decryptData(
-                        Base64.decode(
-                            encryptedData.encrypted_data,
-                            Base64.DEFAULT
-                        )
-                    )
-                    Log.e("erreerooor5555", decryptResult)
-                } catch (e: Exception) {
-                    isLoading.value = false
-                    isError.value = true
-                    error.value = "حدث خطأ عند فك التشفير"
-                }
-                Log.e("erreer", decryptResult)
-
-
-                val token = MyJson.IgnoreUnknownKeys.decodeFromString<SuccessModel>(decryptResult)
-
-                login.setLoginToken(MyJson.MyJson.encodeToString(token))
-
+                login.setLoginToken(res)
                 val intent = Intent(this@LoginActivity, DashboardActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                 startActivity(intent)

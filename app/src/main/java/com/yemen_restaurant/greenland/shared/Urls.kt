@@ -12,8 +12,9 @@ class Urls {
 //        private val baseUrl = "http://192.168.1.4/test2/v1/"
 //            val hostname = "https://greenland-rest.com"
 //        private val baseUrl = "https://greenland-rest.com/v1/"
-        private val baseUrl = "https://user99123.greenland-rest.com/"
-        private val base = baseUrl + "user_app/api/"
+        private val baseUrl = "https://www.greenland-rest.com/v1/"
+//        "https://www.greenland-rest.com/v1/user_app_v1"
+        private val base = baseUrl + "user_app_v1/api/"
         val initUrl = base + "init.php"
         val publicKeyUrl = baseUrl +"get_public_key.php"
         //
