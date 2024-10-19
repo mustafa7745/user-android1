@@ -58,7 +58,6 @@ import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.LocationSettingsResponse
 import com.google.android.gms.location.SettingsClient
 import com.google.android.gms.tasks.Task
-import com.yemen_restaurant.greenland.MainCompose2
 import com.yemen_restaurant.greenland.R
 import com.yemen_restaurant.greenland.models.LocationTypeModel
 import com.yemen_restaurant.greenland.models.UserLocationModel

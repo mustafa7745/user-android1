@@ -50,7 +50,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.yemen_restaurant.greenland.MainCompose2
 import com.yemen_restaurant.greenland.R
 import com.yemen_restaurant.greenland.models.OrderProductWithQntModel
 import com.yemen_restaurant.greenland.models.SuccessIntModel
@@ -117,6 +116,7 @@ private val locationData = mutableStateOf<UserLocationModel?>(null)
                             if (isShow.value)
                                 Dialog(onDismissRequest = { isShow.value = false }) {
                                     if (type.value == 1)
+
                                     Card {
                                         Column(
                                             Modifier
@@ -215,7 +215,7 @@ private val locationData = mutableStateOf<UserLocationModel?>(null)
                                                 }
 
                                                 IconButton(onClick = {
-                                                    cartController3.removeOffer(productInCart.productsModel.id)
+                                                    cartController3.removeOffer(offerInCart.offerModel.id)
                                                     addDeliveryPriceToFinalPrice()
                                                     isShow.value = false
                                                 }) {
@@ -531,9 +531,6 @@ private val locationData = mutableStateOf<UserLocationModel?>(null)
                     color =   Color.Blue
                 )
             }
-
-
-
 
             item {
                 Row(Modifier.background(Color.Gray)) {

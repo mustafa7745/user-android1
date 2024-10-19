@@ -2,7 +2,6 @@ package com.yemen_restaurant.greenland.activities
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -12,60 +11,44 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.lifecycleScope
-import com.yemen_restaurant.greenland.CustomImageView
-import com.yemen_restaurant.greenland.LoadingCompose
-import com.yemen_restaurant.greenland.MainCompose1
 import com.yemen_restaurant.greenland.R
 import com.yemen_restaurant.greenland.models.ProductModel
 import com.yemen_restaurant.greenland.shared.CartController3
-import com.yemen_restaurant.greenland.shared.Login
 import com.yemen_restaurant.greenland.shared.MyJson
 import com.yemen_restaurant.greenland.shared.ProductInCart
 import com.yemen_restaurant.greenland.shared.RequestServer
@@ -73,17 +56,14 @@ import com.yemen_restaurant.greenland.shared.StateController
 import com.yemen_restaurant.greenland.shared.Urls
 import com.yemen_restaurant.greenland.storage.ProductsStorage
 import com.yemen_restaurant.greenland.ui.theme.GreenlandRestaurantTheme
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 import okhttp3.MultipartBody
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.time.Duration
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 
@@ -125,7 +105,6 @@ class ProductsActivity : ComponentActivity() {
                     products.value = productsDB
                     stateController.successState()
                 }
-
             }
             else{
                 read()
@@ -415,6 +394,7 @@ class ProductsActivity : ComponentActivity() {
                                         if (s1.productImages.isEmpty())
                                             Text(modifier = Modifier.align(Alignment.Center), text = "لايوجد صور لهذا الصنف" , fontSize = 8.sp)
                                         else
+
                                         HorizontalPager(
                                             pagerState,
                                             modifier = Modifier.fillMaxSize()

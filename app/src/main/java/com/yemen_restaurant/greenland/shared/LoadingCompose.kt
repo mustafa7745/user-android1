@@ -1,4 +1,4 @@
-package com.yemen_restaurant.greenland
+package com.yemen_restaurant.greenland.shared
 
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.yemen_restaurant.greenland.R
 
 @Composable
 fun LoadingCompose(

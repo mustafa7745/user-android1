@@ -44,8 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
-import com.yemen_restaurant.greenland.CustomImageView
-import com.yemen_restaurant.greenland.MainCompose2
 import com.yemen_restaurant.greenland.R
 import com.yemen_restaurant.greenland.models.ProductModel
 import com.yemen_restaurant.greenland.shared.CartController3

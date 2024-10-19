@@ -1,4 +1,4 @@
-package com.yemen_restaurant.greenland
+package com.yemen_restaurant.greenland.activities
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -27,13 +27,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.lifecycleScope
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
-import com.yemen_restaurant.greenland.activities.DashboardActivity
-import com.yemen_restaurant.greenland.activities.LoginActivity
+import com.yemen_restaurant.greenland.shared.LoadingCompose
 import com.yemen_restaurant.greenland.models.EncryptedModel
 import com.yemen_restaurant.greenland.models.Success2Model
 import com.yemen_restaurant.greenland.models.SuccessModel
@@ -43,8 +41,6 @@ import com.yemen_restaurant.greenland.shared.StateController
 import com.yemen_restaurant.greenland.shared.TokenVM
 import com.yemen_restaurant.greenland.shared.Urls
 import com.yemen_restaurant.greenland.ui.theme.GreenlandRestaurantTheme
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient

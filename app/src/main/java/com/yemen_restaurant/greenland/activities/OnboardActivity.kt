@@ -1,4 +1,4 @@
-package com.yemen_restaurant.greenland
+package com.yemen_restaurant.greenland.activities
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
+import com.yemen_restaurant.greenland.R
 import com.yemen_restaurant.greenland.ui.theme.GreenlandRestaurantTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

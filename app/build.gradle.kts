@@ -13,7 +13,7 @@ android {
         applicationId = "com.yemen_restaurant.greenland"
         minSdk = 23
         targetSdk = 34
-        versionCode = 22
+        versionCode = 25
         versionName = "1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

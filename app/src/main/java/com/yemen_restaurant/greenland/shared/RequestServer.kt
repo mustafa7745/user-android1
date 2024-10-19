@@ -11,7 +11,7 @@ import android.util.Base64
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
-import com.yemen_restaurant.greenland.MainActivity
+import com.yemen_restaurant.greenland.activities.MainActivity
 import com.yemen_restaurant.greenland.models.ErrorMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -62,7 +62,6 @@ class RequestServer(private val activity: ComponentActivity) {
                 }
             }
             }
-
     }
     fun request2(body: RequestBody,url:String,onFail:(code:Int,fail:String)->Unit,onSuccess:(data:String)->Unit,) {
         activity.lifecycleScope.launch {
@@ -209,8 +208,8 @@ class RequestServer(private val activity: ComponentActivity) {
            val  public_key = generateKeyPair().first.replace(Regex("""(\r\n)|\n"""), "")
 
             put("packageName",AppInfoMethod.getAppPackageName())
-//            put("appSha",AppInfoMethod.getAppSha())
-                put("appSha", "41:C7:4D:A4:15:03:35:83:84:62:54:9A:22:E6:39:DA:07:F9:60:05:44:CC:4C:5E:A2:02:74:34:BD:3A:E2:73")
+            put("appSha",AppInfoMethod.getAppSha())
+//                put("appSha", "41:C7:4D:A4:15:03:35:83:84:62:54:9A:22:E6:39:DA:07:F9:60:05:44:CC:4C:5E:A2:02:74:34:BD:3A:E2:73")
 
             put("appVersion",activity.packageManager.getPackageInfo(activity.packageName, 0).versionCode)
             put("device_type_name","android")
@@ -255,6 +254,7 @@ class RequestServer(private val activity: ComponentActivity) {
         val keys = key.split(";")
         val publicKeyBase64 = keys[0]
         val privateKeyBase64 = keys[1]
+
         return Pair(publicKeyBase64, privateKeyBase64)
     }
 

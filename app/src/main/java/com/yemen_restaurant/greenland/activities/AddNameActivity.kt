@@ -28,7 +28,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yemen_restaurant.greenland.MainCompose2
 import com.yemen_restaurant.greenland.R
 import com.yemen_restaurant.greenland.shared.RequestServer
 import com.yemen_restaurant.greenland.shared.StateController

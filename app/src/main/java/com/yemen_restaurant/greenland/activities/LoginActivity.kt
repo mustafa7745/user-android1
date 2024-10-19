@@ -45,8 +45,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
-import com.yemen_restaurant.greenland.LoadingCompose
-import com.yemen_restaurant.greenland.MainActivity
+import com.yemen_restaurant.greenland.shared.LoadingCompose
 import com.yemen_restaurant.greenland.R
 import com.yemen_restaurant.greenland.models.EncryptedModel
 import com.yemen_restaurant.greenland.models.SuccessModel
@@ -63,6 +62,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.MultipartBody
+import java.time.LocalDate
 
 
 val cCompose = CCompose()
@@ -232,7 +232,7 @@ class LoginActivity : ComponentActivity() {
                     Row (
                         modifier = Modifier.fillMaxSize(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ){
                         OutlinedTextField(
                             enabled = !isLoading.value,
@@ -291,22 +291,37 @@ class LoginActivity : ComponentActivity() {
                     // Sign Up Link
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "ليس لدي حساب",
-                            fontSize = 12.sp
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "اشتراك",
-                            color = Color.Blue,
-                            fontSize = 14.sp,
-                            modifier = Modifier.clickable {
-                                showDialog.value = true
-                            }
-                        )
+
+                      Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = "ليس لدي حساب",
+                                    fontSize = 12.sp
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "اشتراك",
+                                    color = Color.Blue,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.clickable {
+                                        showDialog.value = true
+                                    }
+                                )
+
+
                     }
+                    Text(
+                        text = "نسيت كلمة المرور؟",
+                        color = Color.Red,
+                        fontSize = 10.sp,
+                        modifier = Modifier
+                            .padding(20.dp)
+                            .clickable {
+                                intentFunWhatsappForgetPassword()
+                            }
+                    )
 
 
 
@@ -347,6 +362,10 @@ class LoginActivity : ComponentActivity() {
                         }
                     }
                 }
+            }
+            item {
+                Spacer(modifier = Modifier.height(80.dp))
+                CopyrightText()
             }
         }
     }
@@ -427,8 +446,38 @@ class LoginActivity : ComponentActivity() {
             )
         }
     }
+    private fun intentFunWhatsappForgetPassword(): Boolean {
+        val formattedNumber = "967780222271"
+        val message = "مرحبا بك, لقد نسيت كلمة المرور الخاصة بي الرجاء اعادة تعيينها شكرا لك"
 
+        // Create the URI for the WhatsApp link
 
+        val uri =
+            "https://api.whatsapp.com/send?phone=$formattedNumber&text=${Uri.encode(message)}"
 
+        // Create an Intent to open the WhatsApp application
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse(uri)
+            putExtra(Intent.EXTRA_TEXT, message)
+        }
+        try {
+            startActivity(intent)
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "يجب تثبيت الواتس اولا", Toast.LENGTH_LONG).show()
+            return false
+        }
+    }
+    @Composable
+    fun CopyrightText() {
+        val currentYear = LocalDate.now().year
+
+        Text(
+            text = " جميع الحقوق محفوظة" + " © $currentYear",
+            modifier = Modifier.padding(16.dp),
+//            textDirection = TextDirection.Rtl
+        )
+    }
 }
 

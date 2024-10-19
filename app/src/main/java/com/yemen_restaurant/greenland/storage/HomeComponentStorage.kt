@@ -1,6 +1,7 @@
 package com.yemen_restaurant.greenland.storage
 
 import GetStorage
+import com.yemen_restaurant.greenland.activities.getCurrentDate
 import com.yemen_restaurant.greenland.models.HomeComponent
 import com.yemen_restaurant.greenland.shared.MyJson
 import java.time.LocalDateTime
@@ -11,11 +12,17 @@ class HomeComponentStorage {
     private val dateKey = "dateKey"
 
     fun isSetHomeComponent():Boolean{
-       return getStorage.getData(homeComponentKey).isNotEmpty()
+//       return getStorage.getData(homeComponentKey).isNotEmpty()
+        return try {
+            getHomeComponent()
+            true
+        }catch (e:Exception){
+            setHomeComponent("")
+            false
+        }
     }
     fun setHomeComponent(data:String){
-        val currentDate: LocalDateTime = LocalDateTime.now()
-        getStorage.setData(dateKey,currentDate.toString())
+        getStorage.setData(dateKey, getCurrentDate().toString())
         getStorage.setData(homeComponentKey,data)
     }
 

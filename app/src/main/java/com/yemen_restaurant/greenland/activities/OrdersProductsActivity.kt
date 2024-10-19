@@ -27,7 +27,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.android.play.core.review.ReviewManagerFactory
-import com.yemen_restaurant.greenland.MainCompose1
 import com.yemen_restaurant.greenland.models.OrderContentModel
 import com.yemen_restaurant.greenland.shared.MyJson
 import com.yemen_restaurant.greenland.shared.RequestServer
