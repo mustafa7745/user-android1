@@ -288,7 +288,8 @@ fun CustomImageView(
     SubcomposeAsyncImage(
         error = {
             Column(
-                Modifier.fillMaxSize(),
+                Modifier,
+//                Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {

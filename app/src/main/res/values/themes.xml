@@ -2,4 +2,5 @@
 <resources>
 
     <style name="Theme.GL2" parent="android:Theme.Material.Light.NoActionBar" />
+
 </resources>

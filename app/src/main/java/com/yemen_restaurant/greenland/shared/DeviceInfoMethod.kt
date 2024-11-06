@@ -28,7 +28,7 @@ class DeviceInfoMethod  {
     }
 
     fun getDeviceInfo(): JSONObject {
-        val deviceInfo = MyDeviceInfo()
+//        val deviceInfo = MyDeviceInfo()
         val json = JSONObject()
         json.put("user_device_model",Build.MODEL)
         json.put("user_device_version",Build.VERSION.RELEASE)

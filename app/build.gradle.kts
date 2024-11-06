@@ -73,5 +73,7 @@ dependencies {
     implementation("com.google.android.play:app-update:2.1.0")
     implementation("com.google.android.play:review:2.0.1")
     implementation("com.google.android.play:review-ktx:2.0.1")
+//    implementation ("io.github.ahmad-hamwi:tabsync-compose:1.0.1")
+//    implementation("com.quadible:smart-tabs:1.0.0")
 
 }

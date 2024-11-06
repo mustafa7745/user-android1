@@ -41,7 +41,8 @@ class RequestServer(private val activity: ComponentActivity) {
                             .build()
                         val response = okHttpClient.newCall(request).execute()
                         val data = response.body!!.string()
-                        Log.e("dataa",data)
+                        println(data)
+//                        Log.e("dataa",data)
                         Log.e("dataaUrl",url)
 
                         when(response.code){
@@ -164,8 +165,8 @@ class RequestServer(private val activity: ComponentActivity) {
 
         return buildJsonObject {
             put("packageName",AppInfoMethod.getAppPackageName())
-            put("appSha",AppInfoMethod.getAppSha())
-//                put("appSha", "41:C7:4D:A4:15:03:35:83:84:62:54:9A:22:E6:39:DA:07:F9:60:05:44:CC:4C:5E:A2:02:74:34:BD:3A:E2:73")
+//            put("appSha",AppInfoMethod.getAppSha())
+                put("appSha", "41:C7:4D:A4:15:03:35:83:84:62:54:9A:22:E6:39:DA:07:F9:60:05:44:CC:4C:5E:A2:02:74:34:BD:3A:E2:73")
 
             put("appVersion",activity.packageManager.getPackageInfo(activity.packageName, 0).versionCode)
             put("device_type_name","android")

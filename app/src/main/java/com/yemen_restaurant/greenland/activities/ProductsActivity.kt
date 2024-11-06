@@ -1,6 +1,7 @@
 package com.yemen_restaurant.greenland.activities
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,10 +12,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -25,16 +29,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -57,6 +67,7 @@ import com.yemen_restaurant.greenland.shared.Urls
 import com.yemen_restaurant.greenland.storage.ProductsStorage
 import com.yemen_restaurant.greenland.ui.theme.GreenlandRestaurantTheme
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.MultipartBody
@@ -76,10 +87,10 @@ class ProductsActivity : ComponentActivity() {
     lateinit var category_id: String;
     val requestServer = RequestServer(this)
 
+    lateinit var selectedProduct: ProductModel
 
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-    @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         productsStorage= ProductsStorage(this)
@@ -97,7 +108,7 @@ class ProductsActivity : ComponentActivity() {
 
                 val fdate = LocalDateTime.parse(date)
                 val diff = Duration.between(fdate,currenctDate).toMinutes()
-                if (diff>1){
+                if (diff>5){
                     productsStorage.deleteProductsByCategoryId(category_id)
                     read()
                 }
@@ -129,9 +140,23 @@ class ProductsActivity : ComponentActivity() {
                             stateController = stateController,
                             activity = this,
                             read = { read() }) {
-                            ProductsCompose(cart)
+//                            ProductsCompose(cart)
+//                            if (isShow.value) {
+////                                modalList(cart)
+////                                modalListV2()
+//                            }
+
+
+
+
+                            ProductsComposeV2(cart)
                             if (isShow.value) {
-                                modalList(cart)
+//                                modalList(cart)
+                                modalListV2()
+                            }
+
+                            if (isShowAddToCart.value){
+                                AddToCartBottomSheet(cart)
                             }
                         }
                     },
@@ -140,8 +165,103 @@ class ProductsActivity : ComponentActivity() {
         }
     }
 
+    @Composable
+    @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+    private fun AddToCartBottomSheet(cart: CartController3) {
+        ModalBottomSheet(
+            modifier = Modifier.fillMaxHeight(),
+            onDismissRequest = { isShowAddToCart.value = false }) {
+            Box(
+                Modifier.fillMaxSize()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1F)
+                ) {
+                    val pagerState =
+                        rememberPagerState(pageCount = { selectedProduct.productImages.size })
+                    if (selectedProduct.productImages.isEmpty())
+                        Text(
+                            modifier = Modifier.align(Alignment.Center),
+                            text = "لايوجد صور لهذا الصنف",
+                            fontSize = 8.sp
+                        )
+                    else
+                        HorizontalPager(
+                            pagerState,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        ) { i ->
+                            Card(
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(5.dp),
+                                colors = CardColors(
+                                    containerColor = Color.White,
+                                    contentColor = Color.Black,
+                                    disabledContainerColor = Color.Blue,
+                                    disabledContentColor = Color.Cyan
+                                )
+                            ) {
+                                CustomImageView(
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    context = this@ProductsActivity,
+                                    imageUrl = selectedProduct.productImages[i].image,
+                                    okHttpClient = requestServer.createOkHttpClientWithCustomCert()
+                                )
+                            }
+
+                        }
+
+
+                }
+                Column(
+                    Modifier.align(Alignment.BottomCenter)
+                        .padding(bottom = 50.dp)
+                ) {
+                    HorizontalDivider(Modifier.padding(5.dp))
+                    Card(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(33.dp)
+                            .padding(5.dp)
+
+                    ) {
+                        if (selectedProduct.isAvailable == "0") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+
+                                    .background(Color.Red),
+                                contentAlignment = Alignment.Center,
+                            )
+
+                            {
+                                Text(
+                                    text = "تم ايقافه مؤقتا",
+                                    fontSize = 12.sp,
+                                    color = Color.White
+                                )
+                            }
+                        } else {
+                            val foundItem =
+                                cart.products.value.find { it.productsModel == selectedProduct }
+                            AddToCartUi(foundItem, selectedProduct)
+                        }
+                    }
+                }
+
+            }
+
+
+        }
+    }
+
 
     val isShow = mutableStateOf(false)
+    val isShowAddToCart = mutableStateOf(false)
     lateinit var groupId: String
 
 
@@ -223,6 +343,7 @@ class ProductsActivity : ComponentActivity() {
                                 Text(text =  formatPrice(s.postPrice) + " ريال ", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.Black)
 
                                 if (s.products_groupsName != "الرئيسية")
+
                                 Column(
                                     Modifier
                                         .fillMaxWidth(),
@@ -356,6 +477,143 @@ class ProductsActivity : ComponentActivity() {
             })
     }
 
+    @Composable
+    private fun ProductsComposeV2(cart: CartController3) {
+        val newList = products.value.groupBy { it.products_groupsName }
+
+        val newList2 = arrayListOf<ProductModel>()
+        newList.forEach {
+            if (it.key == "الرئيسية") {
+                newList2.addAll(it.value)
+            } else {
+                newList2.add(it.value.first())
+            }
+        }
+        ImagesAndName(newList2)
+    }
+
+    @Composable
+    @OptIn(ExperimentalFoundationApi::class)
+    private fun ImagesAndName(newList2: ArrayList<ProductModel>,count:Int = 1) {
+        LazyVerticalGrid(
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier
+                .fillMaxWidth(),
+            columns = GridCells.Fixed(count),
+            content = {
+                itemsIndexed(newList2) { index, s ->
+                    Card(
+                        Modifier
+                            .width(200.dp)
+                            .padding(5.dp)
+                            .clickable {
+                                if (s.products_groupsName != "الرئيسية") {
+                                    if (isShow.value){
+                                        goToAddToCart(s)
+//                                        selectedProduct = s
+//                                        isShow.value = false
+//                                        isShowAddToCart.value = true
+                                    }else{
+                                        groupId = s.products_groupsId
+                                        isShow.value = true
+                                    }
+                                } else {
+                                    val intent = Intent(
+                                        this@ProductsActivity,
+                                        AddToCartActivity::class.java
+                                    )
+                                    goToAddToCart(s)
+//                                    selectedProduct = s
+//                                    isShowAddToCart.value = true
+                                }
+                            }
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        ) {
+                            val pagerState =
+                                rememberPagerState(pageCount = { s.productImages.size })
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(250.dp)
+                            ) {
+                                if (s.productImages.isEmpty())
+                                    Text(
+                                        modifier = Modifier.align(Alignment.Center),
+                                        text = "لايوجد صور لهذا الصنف",
+                                        fontSize = 8.sp
+                                    )
+                                else
+                                    HorizontalPager(
+                                        pagerState,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                    ) { i ->
+                                        Card(
+                                            Modifier
+                                                .fillMaxSize()
+                                                .padding(5.dp),
+                                            colors = CardColors(
+                                                containerColor = Color.White,
+                                                contentColor = Color.Black,
+                                                disabledContainerColor = Color.Blue,
+                                                disabledContentColor = Color.Cyan
+                                            )
+                                        ) {
+                                            Box(
+                                                Modifier.fillMaxSize()
+                                            ) {
+                                                CustomImageView(
+                                                    modifier = Modifier
+                                                        .align(Alignment.CenterEnd)
+                                                        .size(250.dp),
+                                                    context = this@ProductsActivity,
+                                                    imageUrl = s.productImages[i].image,
+                                                    okHttpClient = requestServer.createOkHttpClientWithCustomCert()
+                                                )
+                                                Text(
+                                                    modifier = Modifier
+                                                        .padding(5.dp)
+                                                        .align(
+                                                            Alignment.BottomStart
+                                                        )
+                                                        .width(150.dp),
+                                                    textAlign = TextAlign.Start,
+                                                    text = s.name,
+                                                    fontSize = 14.sp,
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    maxLines = 2
+                                                )
+                                            }
+
+                                        }
+
+                                    }
+                            }
+
+
+                        }
+                    }
+                }
+
+            })
+    }
+
+    private fun goToAddToCart(
+        s: ProductModel
+    ) {
+
+        val intent = Intent(
+            this,
+            AddToCartActivity::class.java
+        )
+         intent.putExtra("product", MyJson.MyJson.encodeToString(s))
+        startActivity(intent)
+    }
 
 
     @Composable
@@ -719,6 +977,27 @@ class ProductsActivity : ComponentActivity() {
                 }
             )
 
+        }
+    }
+
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun modalListV2(
+    ) {
+        val modalList =
+            products.value.filter { it.products_groupsId == groupId }
+        val newList2 = arrayListOf<ProductModel>()
+        newList2.addAll(modalList)
+        ModalBottomSheet(
+            onDismissRequest = { isShow.value = false }) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 10.dp)
+            ){
+                ImagesAndName(newList2 = newList2,2)
+            }
         }
     }
 }

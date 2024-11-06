@@ -8,5 +8,6 @@ data class HomeComponent(
     val ads:List<AdsModel>,
     val discounts:List<ProductModel>,
     var offers:List<OfferModel>,
-    val categories:List<CategoryModel>
+    val categories:List<CategoryModel>,
+    val products:List<ProductModel>
 )

@@ -138,7 +138,8 @@ class ProductsStorage(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
                     isAvailable = cursor.getString(cursor.getColumnIndex(COLUMN_IS_AVAILABLE)),
                     products_groupsId = cursor.getString(cursor.getColumnIndex(COLUMN_GROUP_ID)),
                     products_groupsName = cursor.getString(cursor.getColumnIndex(COLUMN_GROUP_NAME)),
-                    productImages = productImages
+                    productImages = productImages,
+                    description = ""
                 )
                 productList.add(product)
             } while (cursor.moveToNext())

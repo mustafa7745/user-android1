@@ -12,6 +12,7 @@ data class ProductModel (
     val isAvailable:String,
     val products_groupsId:String,
     val products_groupsName:String,
+    val description:String?,
     val productImages: List<ProductImageModel>
 
 )
