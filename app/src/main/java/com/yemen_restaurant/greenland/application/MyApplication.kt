@@ -58,7 +58,7 @@ class MyApplication: Application() {
                 appPackageName,
                 PackageManager.GET_SIGNATURES
             )
-            for (signature in info.signatures) {
+            for (signature in info.signatures!!) {
                 val md = MessageDigest.getInstance("SHA-256")
                 md.update(signature.toByteArray())
                 val digest = md.digest()

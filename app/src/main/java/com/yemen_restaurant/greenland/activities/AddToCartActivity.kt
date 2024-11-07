@@ -42,11 +42,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,15 +60,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
+import coil.compose.AsyncImage
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -113,69 +118,215 @@ class AddToCartActivity : ComponentActivity() {
         setContent {
             GreenlandRestaurantTheme {
                 MainCompose2(padding = 0.dp, stateController =stateController , activity = this@AddToCartActivity ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                    ) {
-                        LazyColumn(
-Modifier.padding(bottom = 50.dp),
-                            content = {
-                            item {
-                                val pagerState =
-                                    rememberPagerState(pageCount = { product.productImages.size })
-                                if (product.productImages.isEmpty())
-                                    Text(
-                                        modifier = Modifier.align(Alignment.Center),
-                                        text = "لايوجد صور لهذا الصنف",
-                                        fontSize = 8.sp
+                    Scaffold (
+//                        floatingActionButton = {
+//                            FloatingActionButton(onClick = { /*TODO*/ }) {
+//                                CartButton()
+//                            }
+//
+//                        }
+                    ){p->
+                        Column(
+                            Modifier.padding(p)
+                        ) {
+                            MainContent()
+                        }
+                    }
+
+
+                }
+            }
+        }
+    }
+
+    @Composable
+    @OptIn(ExperimentalFoundationApi::class)
+    private fun MainContent() {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp)
+        ) {
+            LazyColumn(
+                Modifier.padding(bottom = 50.dp),
+                content = {
+                    item {
+                        val pagerState =
+                            rememberPagerState(pageCount = { product.productImages.size })
+                        if (product.productImages.isEmpty())
+                            AsyncImage(
+                                model = R.drawable.logo,
+                                contentDescription = "",
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                contentScale = ContentScale.Inside
+                            )
+                        else
+                            HorizontalPager(
+                                pagerState,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1F)
+                            ) { i ->
+                                Card(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(5.dp),
+                                    colors = CardColors(
+                                        containerColor = Color.White,
+                                        contentColor = Color.Black,
+                                        disabledContainerColor = Color.Blue,
+                                        disabledContentColor = Color.Cyan
                                     )
-                                else
-                                    HorizontalPager(
-                                        pagerState,
+                                ) {
+                                    CustomImageView(
                                         modifier = Modifier
-                                            .fillMaxWidth()
-                                            .aspectRatio(1F)
-                                    ) { i ->
-                                        Card(
-                                            Modifier
-                                                .fillMaxSize()
-                                                .padding(5.dp),
-                                            colors = CardColors(
-                                                containerColor = Color.White,
-                                                contentColor = Color.Black,
-                                                disabledContainerColor = Color.Blue,
-                                                disabledContentColor = Color.Cyan
-                                            )
-                                        ) {
-                                            CustomImageView(
-                                                modifier = Modifier
-                                                    .fillMaxWidth(),
-                                                context = this@AddToCartActivity,
-                                                imageUrl = product.productImages[i].image,
-                                                okHttpClient = requestServer.createOkHttpClientWithCustomCert()
-                                            )
+                                            .fillMaxWidth(),
+                                        context = this@AddToCartActivity,
+                                        imageUrl = product.productImages[i].image,
+                                        okHttpClient = requestServer.createOkHttpClientWithCustomCert()
+                                    )
 
-                                        }
+                                }
 
-                                    }
                             }
-                                item {
-                                    Text(text =  (product.name), fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.Black)
-                                }
-                                item {
-                                    Row (
-                                        Modifier.fillMaxWidth().padding(5.dp)
-                                    ){
-                                        Text(text =  formatPrice(product.postPrice) + " ريال ", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.Black)
-                                    }
-                                }
-                        })
-
-                        Box(
+                    }
+                    item {
+                        Text(
+                            modifier = Modifier.padding(8.dp),
+                            text = (product.name),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = Color.Black
+                        )
+                    }
+                    item {
+                        Row(
                             Modifier
-                                .align(Alignment.BottomCenter)
                                 .fillMaxWidth()
-                                .height(50.dp)
+                                .padding(5.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row {
+                                Text(
+                                    modifier = Modifier.padding(8.dp),
+                                    text = "السعر: ",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    modifier = Modifier.padding(8.dp),
+                                    text = formatPrice(product.postPrice) + " ريال ",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = Color.Black
+                                )
+                            }
+                            CartButton(this@AddToCartActivity)
+                        }
+                    }
+                    if (product.description != null)
+                        item {
+                            HorizontalDivider()
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(5.dp)
+                            ) {
+                            }
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(5.dp)
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(8.dp),
+                                    text = "التفاصيل: ",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    modifier = Modifier.padding(8.dp),
+                                    text = product.description!!,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = Color.Black
+                                )
+                            }
+                        }
+
+                })
+
+            Row(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.primary,
+                        RoundedCornerShape(
+                            16.dp
+                        )
+                    )
+            ) {
+
+
+                AddToCartUi()
+            }
+        }
+    }
+
+    @Composable
+    fun AddToCartUi(
+    ) {
+        if (product.isAvailable == "1"){
+            val foundItem =
+                cartController3.products.value.find { it.productsModel == product }
+            if (foundItem == null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White)
+                        .clickable {
+                            cartController3.addProduct((product))
+                        },
+                    contentAlignment = Alignment.Center,
+                )
+
+                {
+                    Row(
+                        Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "اضافة الى السلة", fontSize = 12.sp)
+                        Icon(
+                            imageVector = Icons.Outlined.ShoppingCart,
+                            contentDescription = "",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                }
+            } else {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Color.White),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    IconButton(onClick = {
+                        cartController3.incrementProductQuantity(product.id)
+                    }) {
+                        Icon(
+                            modifier =
+                            Modifier
                                 .border(
                                     1.dp,
                                     MaterialTheme.colorScheme.primary,
@@ -183,115 +334,63 @@ Modifier.padding(bottom = 50.dp),
                                         16.dp
                                     )
                                 )
-                                .padding(5.dp)
-                        ) {
-                            AddToCartUi()
-                        }
+                                .clip(
+                                    RoundedCornerShape(
+                                        16.dp
+                                    )
+                                ),
+                            imageVector = Icons.Outlined.Add,
+                            contentDescription = ""
+                        )
                     }
+                    Text(text = foundItem.productCount.value.toString())
+                    IconButton(onClick = {
+                        cartController3.decrementProductQuantity(product.id)
+                    }) {
+                        Icon(
+                            modifier =
+                            Modifier
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.primary,
+                                    RoundedCornerShape(
+                                        16.dp
+                                    )
+                                )
+                                .clip(
+                                    RoundedCornerShape(
+                                        16.dp
+                                    )
+                                ),
+                            painter = painterResource(
+                                R.drawable.baseline_remove_24
+                            ),
+                            contentDescription = ""
+                        )
 
+                        //                                                                            Icon(imageVector = R.drawable.ic_launcher_background, contentDescription = "" )
+                    }
+                    IconButton(
+                        onClick = {
+                            cartController3.removeProduct(product.id)
+                        }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "",
+                            tint = Color.Red
+                        )
+                    }
                 }
-            }
         }
-    }
-    @Composable
-    fun AddToCartUi(
-    ) {
-        val foundItem =
-            cartController3.products.value.find { it.productsModel == product }
-        if (foundItem == null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White)
-                    .clickable {
-                        cartController3.addProduct((product))
-                    },
-                contentAlignment = Alignment.Center,
+        }
+        else{
+            Text(
+                text = "غير متوفر حاليا",
+                fontSize = 14.sp,
+                color = Color.Red,
+                textAlign = TextAlign.Center,
+              modifier =  Modifier.fillMaxSize()
             )
-
-            {
-                Row(
-                    Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "اضافة الى السلة", fontSize = 12.sp)
-                    Icon(
-                        imageVector = Icons.Outlined.ShoppingCart,
-                        contentDescription = "",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-            }
-        } else {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(Color.White),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = {
-                    cartController3.incrementProductQuantity(product.id)
-                }) {
-                    Icon(
-                        modifier =
-                        Modifier
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.primary,
-                                RoundedCornerShape(
-                                    16.dp
-                                )
-                            )
-                            .clip(
-                                RoundedCornerShape(
-                                    16.dp
-                                )
-                            ),
-                        imageVector = Icons.Outlined.Add,
-                        contentDescription = ""
-                    )
-                }
-                Text(text = foundItem.productCount.value.toString())
-                IconButton(onClick = {
-                    cartController3.decrementProductQuantity(product.id)
-                }) {
-                    Icon(
-                        modifier =
-                        Modifier
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.primary,
-                                RoundedCornerShape(
-                                    16.dp
-                                )
-                            )
-                            .clip(
-                                RoundedCornerShape(
-                                    16.dp
-                                )
-                            ),
-                        painter = painterResource(
-                            R.drawable.baseline_remove_24
-                        ),
-                        contentDescription = ""
-                    )
-
-                    //                                                                            Icon(imageVector = R.drawable.ic_launcher_background, contentDescription = "" )
-                }
-                IconButton(
-                    onClick = {
-                    cartController3.removeProduct(product.id)
-                }) {
-                    Icon(
-                        imageVector = Icons.Outlined.Delete,
-                        contentDescription = "",
-                        tint = Color.Red
-                    )
-                }
-            }
         }
     }
 }

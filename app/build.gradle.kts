@@ -2,12 +2,13 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
+    id("org.jetbrains.kotlin.plugin.compose")
     kotlin("plugin.serialization") version "1.8.10"
 }
 
 android {
     namespace = "com.yemen_restaurant.greenland"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.yemen_restaurant.greenland"
@@ -33,23 +34,25 @@ android {
     }
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.3"
-    }
+
+//    composeOptions {
+//        kotlinCompilerExtensionVersion = "1.4.3"
+//    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    buildToolsVersion = "34.0.0"
 }
 
 dependencies {
@@ -75,5 +78,14 @@ dependencies {
     implementation("com.google.android.play:review-ktx:2.0.1")
 //    implementation ("io.github.ahmad-hamwi:tabsync-compose:1.0.1")
 //    implementation("com.quadible:smart-tabs:1.0.0")
+    implementation("com.google.maps.android:maps-compose:6.2.0")
+//    // Optionally, you can include the Compose utils library for Clustering,
+//    // Street View metadata checks, etc.
+//    implementation ("com.google.maps.android:maps-compose-utils:6.2.1")
+//
+//    // Optionally, you can include the widgets library for ScaleBar, etc.
+//    implementation ("com.google.maps.android:maps-compose-widgets:6.2.1")
+    // Maps SDK for Android
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
 
 }

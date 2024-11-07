@@ -2,6 +2,7 @@ package com.yemen_restaurant.greenland.activities
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -9,7 +10,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -17,8 +17,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,7 +36,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
@@ -46,32 +43,23 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -87,7 +75,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -97,11 +84,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.app.ActivityCompat
 import coil.compose.AsyncImage
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 //import com.quadible.smarttabslist.SmartTabsList
 //import com.ahmadhamwi.tabsync_compose.lazyListTabSync
 import com.yemen_restaurant.greenland.R
-import com.yemen_restaurant.greenland.models.CategoryModel
 import com.yemen_restaurant.greenland.models.HomeComponent
 import com.yemen_restaurant.greenland.models.ProductModel
 import com.yemen_restaurant.greenland.models.User
@@ -116,11 +109,8 @@ import com.yemen_restaurant.greenland.storage.UserStorage
 import com.yemen_restaurant.greenland.synclist.Category
 import com.yemen_restaurant.greenland.synclist.MyTabBar
 import com.yemen_restaurant.greenland.synclist.convertToCategoryStructure
-import com.yemen_restaurant.greenland.synclist.findFirstFullyVisibleItemIndex
 import com.yemen_restaurant.greenland.synclist.lazyListTabSync
 import com.yemen_restaurant.greenland.ui.theme.GreenlandRestaurantTheme
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -145,6 +135,7 @@ class DashboardActivity : ComponentActivity() {
     val requestServer = RequestServer(this)
     lateinit var cats : List<Category>
     private lateinit var updateName2ActivityResult: ActivityResultLauncher<Intent>
+    val ourOffers = "عروضنا"
 
     private fun read() {
         stateController.startRead()
@@ -180,21 +171,14 @@ class DashboardActivity : ComponentActivity() {
                 homeComponent = data
                 homeComponentStorage.setHomeComponent(MyJson.IgnoreUnknownKeys.encodeToString(data))
 //            selectedCategory.value = homeComponent.categories.first()
-              cats = convertToCategoryStructure(homeComponent.categories, getInMainProducts())
-                stateController.successState()
-                if (homeComponent.user!!.name2 == null){
+            initCatgories()
+            if (homeComponent.user!!.name2 == null){
                     goToAddName()
                 }
 
 
         }
     }
-
-//    private fun successState() {
-//        stateController.isLoadingRead.value = false
-//        stateController.isSuccessRead.value = true
-//        stateController.isErrorRead.value = false
-//    }
 
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -220,11 +204,16 @@ class DashboardActivity : ComponentActivity() {
             }
         }
         checkIfNeedUpdate()
+//        stateController.successState()
         setContent {
             GreenlandRestaurantTheme {
 
 
                                 MainCompose1(padding = 0.dp, stateController = stateController, activity = this@DashboardActivity, read = { read() }){
+
+
+
+
 //                                    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
 //                                        rememberTopAppBarState())
 //                                    Scaffold (
@@ -493,13 +482,16 @@ class DashboardActivity : ComponentActivity() {
                 read()
             } else {
                 homeComponent = homeComponentStorage.getHomeComponent()
-//                selectedCategory.value = homeComponent.categories.first()
-                cats = convertToCategoryStructure(homeComponent.categories, getInMainProducts())
-                stateController.successState()
+                initCatgories()
             }
         } else {
             read()
         }
+    }
+
+    private fun initCatgories() {
+        cats = convertToCategoryStructure(homeComponent.categories, getInMainProducts())
+        stateController.successState()
     }
 
     @Composable
@@ -580,59 +572,7 @@ class DashboardActivity : ComponentActivity() {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(count), content = {
                         item {
-                            Column(
-                                Modifier
-                                    .padding(3.dp)
-                                    .width(20.dp)
-                                    .clickable {
-                                        val intent = Intent(
-                                            this@DashboardActivity,
-                                            CartActivity::class.java
-                                        )
-                                        startActivity(intent)
-
-                                    },
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-
-                                Row(
-
-                                    Modifier
-                                        .fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    BadgedBox(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        badge = {
-                                            Text(
-                                                modifier = Modifier
-                                                    .background(MaterialTheme.colorScheme.primary)
-                                                    .padding(3.dp),
-                                                color = Color.White,
-                                                text = (cartController3.products.value.size + cartController3.offers.value.size).toString()
-                                            )
-                                        }) {
-                                        Box(
-                                            Modifier.align(Alignment.Center)
-                                        ) {
-
-
-                                            AsyncImage(
-                                                modifier = Modifier
-                                                    .size(50.dp)
-                                                    .padding(10.dp),
-                                                model = R.drawable.shopping_cart_svgrepo_com,
-                                                contentDescription = null
-                                            )
-                                        }
-                                    }
-                                }
-
-
-                                Text(text = "السلة", fontSize = 10.sp)
-                            }
+                            CartButton(this@DashboardActivity)
                         }
                         item {
                             Column(
@@ -758,6 +698,8 @@ class DashboardActivity : ComponentActivity() {
                     })
             }
     }
+
+
 
     private fun goToAddName() {
         val intent = Intent(this@DashboardActivity, AddNameActivity::class.java)
@@ -1018,8 +960,8 @@ class DashboardActivity : ComponentActivity() {
             }
            }
 
-        Log.e("df",listState.firstVisibleItemIndex.toString())
-        Log.e("df2",listState.findFirstFullyVisibleItemIndex().toString())
+//        Log.e("df",listState.firstVisibleItemIndex.toString())
+//        Log.e("df2",listState.findFirstFullyVisibleItemIndex().toString())
         // Trigger visibility change after a delay
 //        LaunchedEffect(Unit) {
 //            // For demo purposes, toggle visibility after 2 seconds
@@ -1070,6 +1012,7 @@ class DashboardActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(16.dp),
             content = {
                 itemsIndexed(cats) { index, s3 ->
+                    if (homeComponent.offers.isNotEmpty() && s3.category.name == ourOffers)
                     Row (
                         Modifier
                             .fillMaxWidth(),
@@ -1102,6 +1045,7 @@ class DashboardActivity : ComponentActivity() {
                                 goToAddToCart(product)
                             } else {
                                 groupId = product.products_groupsId
+                                isShowSearch.value = false
                                 isShowSubProducts.value = true
                             }
                         } else {
@@ -1182,9 +1126,21 @@ class DashboardActivity : ComponentActivity() {
                                     color = Color.Red
                                 )
                             }
+                            if (product.products_groupsName != "الرئيسية"){
+                                if (!isShowSubProducts.value){
+                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Text(text = "متعدد الخيارات" ,   fontSize = 8.sp,modifier = Modifier .border(
+                                        1.dp,
 
+                                        MaterialTheme.colorScheme.primary,
+                                        RoundedCornerShape(
+                                            16.dp
+                                        )
+                                    ))
+                                }
+
+                            }
                         }
-
                     }
 
                     if (product.productImages.isNotEmpty()) {
@@ -1475,5 +1431,88 @@ fun Modifier.animatedBorder(
             drawContent()
         }
         .background(color = backgroundColor, shape = shape)
+}
+@Composable
+fun CartButton(appComponentActivity: ComponentActivity) {
+    Column(
+        Modifier
+            .padding(3.dp)
+            .clickable {
+                val intent = Intent(
+                    appComponentActivity,
+                    CartActivity::class.java
+                )
+                appComponentActivity.startActivity(intent)
+
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    modifier = Modifier
+                        .border(
+                            1.dp,
+                            MaterialTheme.colorScheme.primary,
+                            RoundedCornerShape(
+                                16.dp
+                            )
+                        )
+                        .clip(
+                            RoundedCornerShape(
+                                16.dp
+                            )
+                        )
+                        .padding(3.dp),
+                    color = Color.Black,
+                    text = (cartController3.products.value.size + cartController3.offers.value.size).toString()
+                )
+            }
+            Column {
+                AsyncImage(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .padding(10.dp),
+                    model = R.drawable.shopping_cart_svgrepo_com,
+                    contentDescription = null
+                )
+                Text(text = "السلة", fontSize = 10.sp)
+            }
+//            BadgedBox(
+//                modifier = Modifier.fillMaxWidth(),
+//                badge = {
+//                    Text(
+//                        modifier = Modifier
+//                            .border(
+//                                1.dp,
+//                                MaterialTheme.colorScheme.primary,
+//                                RoundedCornerShape(
+//                                    16.dp
+//                                )
+//                            )
+//                            .clip(
+//                                RoundedCornerShape(
+//                                    16.dp
+//                                )
+//                            )
+//                            .padding(3.dp),
+//                        color = Color.Black,
+//                        text = (cartController3.products.value.size + cartController3.offers.value.size).toString()
+//                    )
+//                }) {
+//                Box(
+//                    Modifier.align(Alignment.Center)
+//                ) {
+//
+//                }
+//            }
+        }
+
+    }
 }
 
