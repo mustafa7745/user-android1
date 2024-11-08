@@ -171,6 +171,18 @@ class AddToCartActivity : ComponentActivity() {
                                 Card(
                                     Modifier
                                         .fillMaxSize()
+                                        .border(
+                                            1.dp,
+                                            MaterialTheme.colorScheme.primary,
+                                            RoundedCornerShape(
+                                                16.dp
+                                            )
+                                        )
+                                        .clip(
+                                            RoundedCornerShape(
+                                                16.dp
+                                            )
+                                        )
                                         .padding(5.dp),
                                     colors = CardColors(
                                         containerColor = Color.White,
@@ -271,7 +283,8 @@ class AddToCartActivity : ComponentActivity() {
                         RoundedCornerShape(
                             16.dp
                         )
-                    )
+                    ),
+                verticalAlignment = Alignment.CenterVertically
             ) {
 
 
@@ -317,7 +330,7 @@ class AddToCartActivity : ComponentActivity() {
                     Modifier
                         .fillMaxWidth()
                         .background(Color.White),
-                    horizontalArrangement = Arrangement.Start,
+                    horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 

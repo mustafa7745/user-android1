@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.LinearEasing
@@ -95,6 +96,7 @@ import com.google.maps.android.compose.rememberMarkerState
 //import com.quadible.smarttabslist.SmartTabsList
 //import com.ahmadhamwi.tabsync_compose.lazyListTabSync
 import com.yemen_restaurant.greenland.R
+import com.yemen_restaurant.greenland.application.MyApplication
 import com.yemen_restaurant.greenland.models.HomeComponent
 import com.yemen_restaurant.greenland.models.ProductModel
 import com.yemen_restaurant.greenland.models.User
@@ -105,12 +107,14 @@ import com.yemen_restaurant.greenland.shared.SharedInAppUpdate
 import com.yemen_restaurant.greenland.shared.StateController
 import com.yemen_restaurant.greenland.shared.Urls
 import com.yemen_restaurant.greenland.storage.HomeComponentStorage
+import com.yemen_restaurant.greenland.storage.ProductsStorage
 import com.yemen_restaurant.greenland.storage.UserStorage
 import com.yemen_restaurant.greenland.synclist.Category
 import com.yemen_restaurant.greenland.synclist.MyTabBar
 import com.yemen_restaurant.greenland.synclist.convertToCategoryStructure
 import com.yemen_restaurant.greenland.synclist.lazyListTabSync
 import com.yemen_restaurant.greenland.ui.theme.GreenlandRestaurantTheme
+import com.yemen_restaurant.greenland.viewModels.HomeComponentViewModel
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -121,71 +125,32 @@ import java.time.LocalDateTime
 
 val cartController3 = CartController3()
 
+
 class DashboardActivity : ComponentActivity() {
-    private lateinit var homeComponent: HomeComponent
-    val stateController = StateController()
-    private val homeComponentStorage = HomeComponentStorage()
+
+    private val homeComponentViewModel: HomeComponentViewModel by viewModels()
+    val requestServer = RequestServer(this)
+
     private val userName = mutableStateOf("")
-    val userStorage = UserStorage()
+
     val isShowSubProducts = mutableStateOf(false)
     lateinit var groupId: String
-    val itemView = mutableStateOf(false)
-    val itemType = mutableStateOf(0)
     val isShowSearch = mutableStateOf(false)
-    val requestServer = RequestServer(this)
-    lateinit var cats : List<Category>
+
     private lateinit var updateName2ActivityResult: ActivityResultLauncher<Intent>
-    val ourOffers = "عروضنا"
-
-    private fun read() {
-        stateController.startRead()
-        var data3: JsonObject
-        var body1 = MultipartBody.Builder().setType(MultipartBody.FORM)
-        if (userStorage.isSetUser()) {
-            data3 = buildJsonObject {
-                put("tag", "read")
-            }
-
-        } else {
-            body1.addFormDataPart("data1", requestServer.getData1().toString())
-            .addFormDataPart("data2", requestServer.getData2())
-            data3 = buildJsonObject {
-                put("tag", "readWithUser2")
-            }
-
-        }
+//
 
 
-        body1.addFormDataPart("data3", data3.toString()).build()
 
-        val requestBody = body1.build()
-        requestServer.request2(requestBody, Urls.homeUrl, { code, it ->
-           stateController.errorStateRead(it)
-        }) {
-                val data = MyJson.IgnoreUnknownKeys.decodeFromString<HomeComponent>(it)
-                if (data.user != null) {
-                    userStorage.setUser(MyJson.IgnoreUnknownKeys.encodeToString(data.user))
-                }else{
-                    data.user = userStorage.getUser()
-                }
-                homeComponent = data
-                homeComponentStorage.setHomeComponent(MyJson.IgnoreUnknownKeys.encodeToString(data))
-//            selectedCategory.value = homeComponent.categories.first()
-            initCatgories()
-            if (homeComponent.user!!.name2 == null){
-                    goToAddName()
-                }
-
-
-        }
-    }
 
 
     @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         SharedInAppUpdate(this).checkUpdate()
+      homeComponentViewModel.productsStorage= ProductsStorage(this)
         updateName2ActivityResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 val data: Intent? = result.data
@@ -195,21 +160,20 @@ class DashboardActivity : ComponentActivity() {
                     val user =  MyJson.IgnoreUnknownKeys.decodeFromString<User>(resultValue)
                     if (user.name2 != null){
                         userName.value = user.name2.toString()
-                        userStorage.setUser(MyJson.IgnoreUnknownKeys.encodeToString(user))
-                        homeComponent.user?.name2 = user.name2
-                        homeComponentStorage.setHomeComponent(MyJson.IgnoreUnknownKeys.encodeToString(homeComponent))
+                        homeComponentViewModel.userStorage.setUser(MyJson.IgnoreUnknownKeys.encodeToString(user))
+                        homeComponentViewModel.homeComponent.user?.name2 = user.name2
+                        homeComponentViewModel. homeComponentStorage.setHomeComponent(MyJson.IgnoreUnknownKeys.encodeToString(homeComponentViewModel.homeComponent))
                     }
                 }
 
             }
         }
-        checkIfNeedUpdate()
-//        stateController.successState()
+       homeComponentViewModel.checkIfNeedUpdate(requestServer, goToAddName = {goToAddName()})
         setContent {
             GreenlandRestaurantTheme {
 
 
-                                MainCompose1(padding = 0.dp, stateController = stateController, activity = this@DashboardActivity, read = { read() }){
+                                MainCompose1(padding = 0.dp, stateController = homeComponentViewModel.stateController, activity = this@DashboardActivity, read = { homeComponentViewModel.read(requestServer, goToAddName = { goToAddName() }) }){
 
 
 
@@ -283,7 +247,7 @@ class DashboardActivity : ComponentActivity() {
 //                                    MyLazyList( categories = cats,listState)
 //                                    TabSyncComposeScreen(dummyCategories)
 //                                    SmartTabsList(
-//                                        smartTabsContent = homeComponent.products,
+//                                        smartTabsContent = homeComponentViewModel.homeComponent.products,
 //                                        isTab = { itemFromContent -> true },
 //                                        smartTab = { headerItem, isSelected -> Text(text = headerItem.categoryId)
 ////                                            Tab(
@@ -301,10 +265,10 @@ class DashboardActivity : ComponentActivity() {
 //                                            Text(text = itemFromContent.name, modifier = Modifier.height(200.dp))
 //                                        }
 //                                    )
-//                                    val (selectedTabIndex, setSelectedTabIndex, syncedListState) = lazyListTabSync(homeComponent.products.indices.toList())
+//                                    val (selectedTabIndex, setSelectedTabIndex, syncedListState) = lazyListTabSync(homeComponentViewModel.homeComponent.products.indices.toList())
 //
 //                                    ScrollableTabRow(selectedTabIndex) {
-//                                        homeComponent.products.forEachIndexed { index, product ->
+//                                        homeComponentViewModel.homeComponent.products.forEachIndexed { index, product ->
 //                                            Tab(
 //                                                selected = index == selectedTabIndex,
 //                                                onClick = {
@@ -312,7 +276,7 @@ class DashboardActivity : ComponentActivity() {
 //                                                    setSelectedTabIndex(index)
 //                                                          },
 //                                            ){
-//                                                homeComponent.categories.find { it.id == product.categoryId }
+//                                                homeComponentViewModel.homeComponent.categories.find { it.id == product.categoryId }
 //                                                    ?.let { Text(text = it.name) }
 //                                            }
 //                                        }
@@ -324,9 +288,9 @@ class DashboardActivity : ComponentActivity() {
 //                                    HorizontalDivider(thickness = 3.dp , modifier = Modifier.padding(1.dp))
 //                                    ImagesAndName(cats,listState)
 //                                    LazyColumn(content = {
-//                                        if (homeComponent.offers.isNotEmpty())
+//                                        if (homeComponentViewModel.homeComponent.offers.isNotEmpty())
 //                                        OffersComponents()
-//                                        if (homeComponent.ads.isNotEmpty())
+//                                        if (homeComponentViewModel.homeComponent.ads.isNotEmpty())
 //                                        AdsComponent()
 ////                                        Categories()
 //                                    })
@@ -370,7 +334,7 @@ class DashboardActivity : ComponentActivity() {
                     .height(60.dp)
                     .padding(6.dp),
                 content = {
-                    items(homeComponent.categories) {
+                    items(homeComponentViewModel.homeComponent.categories) {
 //                        Tab(selected = selectedCategory.value.id == it.id, onClick = {selectedCategory.value = it }) {
 //                            Text(modifier = Modifier.padding(5.dp), text = it.name)
 //                        }
@@ -394,7 +358,7 @@ class DashboardActivity : ComponentActivity() {
         item {
             Text(text = "الاصناف")
         }
-        items(homeComponent.categories.chunked(2)) { rowItems ->
+        items(homeComponentViewModel.homeComponent.categories.chunked(2)) { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly // توزيع العناصر بالتساوي
@@ -475,55 +439,15 @@ class DashboardActivity : ComponentActivity() {
         }
     }
 
-    private fun checkIfNeedUpdate() {
-        if (homeComponentStorage.isSetHomeComponent()) {
-            val diff = Duration.between(homeComponentStorage.getDate(), getCurrentDate()).toMinutes()
-            if (diff > 5) {
-                read()
-            } else {
-                homeComponent = homeComponentStorage.getHomeComponent()
-                initCatgories()
-            }
-        } else {
-            read()
-        }
-    }
-
-    private fun initCatgories() {
-        cats = convertToCategoryStructure(homeComponent.categories, getInMainProducts())
-        stateController.successState()
-    }
-
-    @Composable
-    private fun CategoriesComponent() {
-
-
-
-//        HeaderComponent()
-
-
-        if (itemView.value == true) {
-            if (itemType.value == 1) {
-                if (homeComponent.offers.isNotEmpty()) {
-//                    OffersComponents()
-                }
-            }
-            if (itemType.value == 2) {
-                if (homeComponent.ads.isNotEmpty()){}
-//                    AdsComponent()
-            }
-        }
-        CategoriesComponents()
-    }
 
     @Composable
     private fun HeaderComponent(modifier :Modifier = Modifier) {
         var count = 3
-        if (homeComponent.ads.isNotEmpty()) count++
-        if (homeComponent.offers.isNotEmpty()) count++
-        if (homeComponent.discounts.isNotEmpty()) count++
+        if (homeComponentViewModel.homeComponent.ads.isNotEmpty()) count++
+        if (homeComponentViewModel.homeComponent.offers.isNotEmpty()) count++
+        if (homeComponentViewModel.homeComponent.discounts.isNotEmpty()) count++
 
-        if (homeComponent.user != null)
+        if (homeComponentViewModel.homeComponent.user != null)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -546,8 +470,8 @@ class DashboardActivity : ComponentActivity() {
                             .padding(10.dp), model = R.drawable.user, contentDescription = null
                     )
                     userName.value =
-                        if (homeComponent.user!!.name2 != null) homeComponent.user!!.name2.toString()
-                        else homeComponent.user!!.name
+                        if (homeComponentViewModel.homeComponent.user!!.name2 != null) homeComponentViewModel.homeComponent.user!!.name2.toString()
+                        else homeComponentViewModel.homeComponent.user!!.name
 
 
                     Text(
@@ -557,7 +481,7 @@ class DashboardActivity : ComponentActivity() {
                         text = "مرحبا بك: ${userName.value}"
                     )
                 }
-                if (homeComponent.user!!.name2 == null)
+                if (homeComponentViewModel.homeComponent.user!!.name2 == null)
                     Text(
                         "قم بتعيين الاسم الان", fontSize = 8.sp, maxLines = 1,
                         modifier = Modifier
@@ -606,13 +530,7 @@ class DashboardActivity : ComponentActivity() {
                                     .padding(3.dp)
                                     .width(20.dp)
                                     .clickable {
-//                                        val intent = Intent(
-//                                            this@DashboardActivity,
-//                                            SearchActivity::class.java
-//                                        )
-//                                        startActivity(intent)
                                         isShowSearch.value = true
-
                                     },
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
@@ -627,74 +545,6 @@ class DashboardActivity : ComponentActivity() {
                                 Text(text = "بحث", fontSize = 10.sp)
                             }
                         }
-                        if (homeComponent.offers.isNotEmpty())
-                            item {
-                                Column(
-                                    Modifier
-                                        .padding(3.dp)
-                                        .clickable {
-                                            itemView.value = !itemView.value
-                                            itemType.value = 1
-                                        }
-                                        .width(20.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    AsyncImage(
-                                        modifier = Modifier
-                                            .size(50.dp)
-                                            .padding(10.dp),
-                                        model = R.drawable.offers,
-                                        contentDescription = null
-                                    )
-                                    Text(text = "العروض", fontSize = 10.sp)
-                                }
-                            }
-                        if (homeComponent.ads.isNotEmpty())
-                            item {
-                                Column(
-                                    Modifier
-                                        .padding(3.dp)
-                                        .clickable {
-                                            itemView.value = !itemView.value
-                                            itemType.value = 2
-                                        }
-                                        .width(20.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    AsyncImage(
-                                        modifier = Modifier
-                                            .size(50.dp)
-                                            .padding(10.dp),
-                                        model = R.drawable.ads_advertising_color_svgrepo_com,
-                                        contentDescription = null
-                                    )
-                                    Text(text = "الاعلانات", fontSize = 10.sp)
-                                }
-                            }
-                        if (homeComponent.discounts.isNotEmpty())
-                            item {
-                                Column(
-                                    Modifier
-                                        .padding(3.dp)
-                                        .clickable {
-                                            Log.e("discounts", homeComponent.discounts.toString())
-                                        }
-                                        .width(20.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    AsyncImage(
-                                        modifier = Modifier
-                                            .size(50.dp)
-                                            .padding(10.dp),
-                                        model = R.drawable.discount_label_svgrepo_com,
-                                        contentDescription = null
-                                    )
-                                    Text(text = "التخفيضات", fontSize = 10.sp)
-                                }
-                            }
                     })
             }
     }
@@ -706,87 +556,7 @@ class DashboardActivity : ComponentActivity() {
         updateName2ActivityResult.launch(intent)
     }
 
-    @Composable
-    private fun CategoriesComponents() {
 
-//        Column {
-//            Text(text = "الاصناف")
-//            LazyVerticalGrid(
-//                horizontalArrangement = Arrangement.Center,
-//                modifier = Modifier
-//                    .fillMaxWidth(),
-//                columns = GridCells.Fixed(2),
-//                content = {
-//                    itemsIndexed(homeComponent.categories) { index, s ->
-//
-//                        Card(
-//                            Modifier
-//
-//                                .height(200.dp)
-//                                .width(200.dp)
-//                                .padding(5.dp)
-//
-//                        ) {
-//                            Box(
-//                                Modifier
-//                                    .fillMaxSize()
-//                                    .background(Color.White)
-//                                    .border(1.dp, Color.Black, RoundedCornerShape(16.dp))
-//                                    .clip(RoundedCornerShape(16.dp))
-//                                    .clickable {
-//                                        val intent = Intent(
-//                                            this@DashboardActivity,
-//                                            ProductsActivity::class.java
-//                                        )
-//                                        intent.putExtra("category_id", s.id)
-//                                        startActivity(intent)
-//                                    }
-//                            ) {
-//                                Box(
-//                                    modifier = Modifier
-//                                        .fillMaxWidth()
-//                                        .height(170.dp)
-//                                        .align(Alignment.TopCenter)
-//                                ) {
-//                                    CustomImageView(context = this@DashboardActivity, imageUrl =s.category_image_path + s.image , okHttpClient = requestServer.createOkHttpClientWithCustomCert())
-//                                }
-//
-//                                Box(
-//                                    modifier = Modifier
-//                                        .fillMaxWidth()
-//                                        .height(30.dp)
-//                                        .align(Alignment.BottomCenter)
-//                                        .background(MaterialTheme.colorScheme.primary),
-//                                ) {
-//
-//                                    Text(
-//                                        modifier = Modifier
-//                                            .align(Alignment.Center),
-//                                        text = s.name,
-//                                        fontSize = 12.sp,
-//                                        color = MaterialTheme.colorScheme.secondary,
-//                                        overflow = TextOverflow.Ellipsis,
-//                                        maxLines = 1
-//                                    )
-//
-//                                }
-//                            }
-//
-//
-//                        }
-//
-//                    }
-//                })
-//        }
-    }
-
-//    @Composable
-    private fun LazyListScope.OffersComponents() {
-    item {
-        OffersContent()
-    }
-
-    }
 
     @Composable
     private fun OffersContent() {
@@ -799,7 +569,7 @@ class DashboardActivity : ComponentActivity() {
                 .aspectRatio(16f / 9f)
                 .padding(5.dp),
             rows = GridCells.Fixed(1), content = {
-                itemsIndexed(homeComponent.offers) { index, item ->
+                itemsIndexed(homeComponentViewModel.homeComponent.offers) { index, item ->
                     Column(
                         Modifier.fillMaxWidth()
                     ) {
@@ -895,14 +665,6 @@ class DashboardActivity : ComponentActivity() {
         HorizontalDivider(thickness = 5.dp)
     }
 
-    //    @Composable
-    private fun LazyListScope.AdsComponent() {
-        item{
-            AdsContent()
-        }
-
-    }
-
     @Composable
     private fun AdsContent() {
         LazyHorizontalGrid(
@@ -910,7 +672,7 @@ class DashboardActivity : ComponentActivity() {
                 .fillMaxWidth()
                 .height(180.dp),
             rows = GridCells.Fixed(1), content = {
-                itemsIndexed(homeComponent.ads) { index, item ->
+                itemsIndexed(homeComponentViewModel.homeComponent.ads) { index, item ->
                     Card(
                         Modifier
                             .height(150.dp)
@@ -936,38 +698,14 @@ class DashboardActivity : ComponentActivity() {
             })
     }
 
-
-    private fun getInMainProducts(): ArrayList<ProductModel> {
-        val newList = homeComponent.products.groupBy { it.products_groupsName }
-
-        val newList2 = arrayListOf<ProductModel>()
-        newList.forEach {
-            if (it.key == "الرئيسية") {
-                newList2.addAll(it.value)
-            } else {
-                newList2.add(it.value.first())
-            }
-        }
-        return newList2
-    }
-
     @Composable
     private fun ImagesAndName() {
-        val (selectedTabIndex, setSelectedTabIndex, listState) = lazyListTabSync(cats.indices.toList())
+        val (selectedTabIndex, setSelectedTabIndex, listState) = lazyListTabSync(homeComponentViewModel.cats.indices.toList())
         val isVisible by remember {
             derivedStateOf {
                 listState.firstVisibleItemIndex<=0
             }
            }
-
-//        Log.e("df",listState.firstVisibleItemIndex.toString())
-//        Log.e("df2",listState.findFirstFullyVisibleItemIndex().toString())
-        // Trigger visibility change after a delay
-//        LaunchedEffect(Unit) {
-//            // For demo purposes, toggle visibility after 2 seconds
-//            kotlinx.coroutines.delay(5000)
-//            isVisible = !isVisible
-//        }
 
 
             AnimatedVisibility(visible = isVisible,
@@ -975,7 +713,7 @@ class DashboardActivity : ComponentActivity() {
             ) {
                 Column {
                     HeaderComponent()
-                    if (homeComponent.ads.isNotEmpty())
+                    if (homeComponentViewModel.homeComponent.ads.isNotEmpty())
                     AdsContent()
                 }
             }
@@ -995,7 +733,7 @@ class DashboardActivity : ComponentActivity() {
                     contentDescription = ""
                 )
             }
-            MyTabBar(categories = cats, selectedTabIndex =selectedTabIndex) { index, _ ->
+            MyTabBar(categories = homeComponentViewModel.cats, selectedTabIndex =selectedTabIndex,requestServer) { index, _ ->
                 setSelectedTabIndex(
                     index
                 )
@@ -1011,8 +749,7 @@ class DashboardActivity : ComponentActivity() {
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             content = {
-                itemsIndexed(cats) { index, s3 ->
-                    if (homeComponent.offers.isNotEmpty() && s3.category.name == ourOffers)
+                itemsIndexed(homeComponentViewModel.cats) { index, s3 ->
                     Row (
                         Modifier
                             .fillMaxWidth(),
@@ -1177,111 +914,6 @@ class DashboardActivity : ComponentActivity() {
                 itemsIndexed(newList2) { index, product ->
 
                     ProductCard(product = product)
-//                        Card(
-//                            Modifier
-//                                .padding(5.dp)
-//                                .clickable {
-//                                    if (s.products_groupsName != "الرئيسية") {
-//                                        if (isShowSubProducts.value) {
-//                                            goToAddToCart(s)
-//                                        } else {
-//                                            groupId = s.products_groupsId
-//                                            isShowSearch.value = false
-//                                            isShowSubProducts.value = true
-//                                        }
-//                                    } else {
-//                                        val intent = Intent(
-//                                            this@DashboardActivity,
-//                                            AddToCartActivity::class.java
-//                                        )
-//                                        goToAddToCart(s)
-//                                    }
-//                                }
-//                        ) {
-//                            Column(
-//                                horizontalAlignment = Alignment.CenterHorizontally,
-//                                modifier = Modifier
-//                                    .fillMaxWidth()
-//                            ) {
-//                                val pagerState = rememberPagerState(
-//                                    pageCount = { if (s.productImages.isNotEmpty()) s.productImages.size else 1 }
-//                                )
-//                                Box(
-//                                    modifier = Modifier
-//                                        .fillMaxWidth()
-//                                        .height(150.dp)
-//                                ) {
-//                                    HorizontalPager(
-//                                        pagerState,
-//                                        modifier = Modifier
-//                                            .fillMaxWidth()
-//                                    ) { i ->
-//                                        Card(
-//                                            Modifier
-//                                                .fillMaxSize()
-//                                                .padding(5.dp),
-//                                            colors = CardColors(
-//                                                containerColor = Color.White,
-//                                                contentColor = Color.Black,
-//                                                disabledContainerColor = Color.Blue,
-//                                                disabledContentColor = Color.Cyan
-//                                            )
-//                                        ) {
-//                                            Row (
-//                                                horizontalArrangement = Arrangement.SpaceBetween,
-//                                                verticalAlignment = Alignment.CenterVertically,
-//                                                modifier = Modifier
-//                                                    .fillMaxSize()
-//                                                    .padding(5.dp)
-//                                            ){
-//
-//                                                Column (Modifier.fillMaxHeight(),
-//                                                    verticalArrangement=  Arrangement.SpaceBetween,
-//                                                    horizontalAlignment= Alignment.Start,
-//                                                ){
-//                                                    Text(
-//                                                        modifier = Modifier
-//                                                            .padding(5.dp),
-////                                                            .align(
-////                                                                Alignment.TopStart
-////                                                            ),
-//                                                        textAlign = TextAlign.Start,
-//                                                        text = s.name,
-//                                                        fontSize = 12.sp,
-//                                                        color = MaterialTheme.colorScheme.primary,
-//                                                        overflow = TextOverflow.Ellipsis,
-//                                                        maxLines = 2
-//                                                    )
-//                                                    Text(text =  formatPrice(s.postPrice) + " ريال ", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.Black)
-//                                                }
-//
-//                                                if (s.productImages.isNotEmpty()){
-//                                                    CustomImageView(
-//                                                        modifier = Modifier
-//                                                            .size(150.dp)
-//                                                            .fillMaxWidth(0.3f),
-//                                                        context = this@DashboardActivity,
-//                                                        imageUrl = s.productImages[i].image,
-//                                                        okHttpClient = requestServer.createOkHttpClientWithCustomCert()
-//                                                    )
-//                                                }
-//                                                else{
-//                                                    AsyncImage(
-//                                                        model = R.drawable.logo,
-//                                                        contentDescription = "",
-//                                                        modifier = Modifier
-//                                                            .size(120.dp)
-////                                                            .align(Alignment.CenterEnd)
-//                                                            .padding(5.dp),
-//                                                        contentScale = ContentScale.Inside
-//                                                    )
-//                                                }
-//                                            }
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
                     }
             })
     }
@@ -1293,7 +925,7 @@ class DashboardActivity : ComponentActivity() {
 
     ) {
         val modalList =
-           homeComponent.products.filter { it.products_groupsId == groupId }
+           homeComponentViewModel.homeComponent.products.filter { it.products_groupsId == groupId }
         val newList2 = arrayListOf<ProductModel>()
         newList2.addAll(modalList)
         ModalBottomSheet(
@@ -1337,7 +969,7 @@ class DashboardActivity : ComponentActivity() {
                 Column(modifier = Modifier.padding(16.dp)) {
                     var search by remember { mutableStateOf("") }
                     val newList2 = if (search.isNotEmpty()) {
-                        homeComponent.products.filter { it.name.contains(search, ignoreCase = true) }
+                        homeComponentViewModel.homeComponent.products.filter { it.name.contains(search, ignoreCase = true) }
                     } else {
                         emptyList() // Return an empty list when the search query is empty
                     }
@@ -1483,36 +1115,7 @@ fun CartButton(appComponentActivity: ComponentActivity) {
                 )
                 Text(text = "السلة", fontSize = 10.sp)
             }
-//            BadgedBox(
-//                modifier = Modifier.fillMaxWidth(),
-//                badge = {
-//                    Text(
-//                        modifier = Modifier
-//                            .border(
-//                                1.dp,
-//                                MaterialTheme.colorScheme.primary,
-//                                RoundedCornerShape(
-//                                    16.dp
-//                                )
-//                            )
-//                            .clip(
-//                                RoundedCornerShape(
-//                                    16.dp
-//                                )
-//                            )
-//                            .padding(3.dp),
-//                        color = Color.Black,
-//                        text = (cartController3.products.value.size + cartController3.offers.value.size).toString()
-//                    )
-//                }) {
-//                Box(
-//                    Modifier.align(Alignment.Center)
-//                ) {
-//
-//                }
-//            }
         }
-
     }
 }
 

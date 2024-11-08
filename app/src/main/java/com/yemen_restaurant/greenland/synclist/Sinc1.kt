@@ -3,8 +3,10 @@ package com.yemen_restaurant.greenland.synclist
 import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -33,8 +35,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yemen_restaurant.greenland.R
+import com.yemen_restaurant.greenland.activities.CustomImageView
+import com.yemen_restaurant.greenland.application.MyApplication
 import com.yemen_restaurant.greenland.models.CategoryModel
 import com.yemen_restaurant.greenland.models.ProductModel
+import com.yemen_restaurant.greenland.shared.RequestServer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -153,32 +158,46 @@ fun lazyListTabSync(
 fun MyTabBar(
     categories: List<Category>,
     selectedTabIndex: Int,
-    onTabClicked: (index: Int, category: Category) -> Unit
+    requestServer: RequestServer? = null,
+    onTabClicked: (index: Int, category: Category) -> Unit,
+
 ) {
     ScrollableTabRow(
         selectedTabIndex = selectedTabIndex,
-        edgePadding = 0.dp
+        edgePadding = 0.dp,
+
     ) {
         categories.forEachIndexed { index, category ->
             // Using remember to avoid recomposing static tab content
             val tabName = remember(category) { category.category.name }
 
             Tab(
-                modifier= Modifier.padding(3.dp).height(50.dp).border(
-                        1.dp,
-                MaterialTheme.colorScheme.primary,
-                RoundedCornerShape(
-                    16.dp
-                )
-            )
-                .clip(
-                    RoundedCornerShape(
-                        16.dp
-                    )
-                ),
+                modifier= Modifier.padding(3.dp).height(80.dp),
                 selected = index == selectedTabIndex,
                 onClick = { onTabClicked(index, category) },
-                text = {  Text(
+                icon =
+                {
+                    if (requestServer != null)
+                    CustomImageView(
+                        context = MyApplication.AppContext,
+                        imageUrl = category.category.category_image_path +  category.category.image,
+                        modifier = Modifier.size(50.dp).border(
+                            1.dp,
+                            MaterialTheme.colorScheme.primary,
+                            RoundedCornerShape(
+                                16.dp
+                            )
+                        )
+                            .clip(
+                                RoundedCornerShape(
+                                    16.dp
+                                )
+                            ),
+                        okHttpClient = requestServer.createOkHttpClientWithCustomCert()
+                    )
+                },
+                text = {
+                    Text(
                     modifier = Modifier.padding(3.dp),
                     textAlign = TextAlign.Start,
                     text = tabName,
@@ -187,7 +206,9 @@ fun MyTabBar(
                     ),
                     fontSize = 12.sp,
                     color = if (index == selectedTabIndex) MaterialTheme.colorScheme.primary else Color.Black
-                ) }
+                )
+
+                }
             )
         }
     }

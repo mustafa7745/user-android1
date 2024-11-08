@@ -15,6 +15,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -247,7 +249,7 @@ private fun add() {
 
     val cameraPositionState = mutableStateOf(
         CameraPositionState(
-            position = CameraPosition.fromLatLngZoom(location.value, 15f)
+            position = CameraPosition.fromLatLngZoom(location.value, 16f)
         )
     )
 
@@ -275,7 +277,18 @@ private fun add() {
                            )
                        }
                        Row (
-                           Modifier.align(Alignment.TopEnd).padding(5.dp)
+                           Modifier.align(Alignment.TopEnd).padding(5.dp).border(
+                               1.dp,
+                               MaterialTheme.colorScheme.primary,
+                               RoundedCornerShape(
+                                   16.dp
+                               )
+                           )
+                               .clip(
+                                   RoundedCornerShape(
+                                       16.dp
+                                   )
+                               )
                        ){
                            IconButton(onClick = {
 
@@ -351,49 +364,6 @@ private fun add() {
                             modifier = Modifier.padding(start = 4.dp)
                         )
                     }
-                    OutlinedTextField(
-                        value = street.value,
-                        onValueChange = { s->street.value = s
-                            isValidStreet = street.value.length < 20
-                        },
-                        label = { Text("الشارع") },
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = !isValidStreet,
-                    )
-
-                    var isValidNearTo by remember { mutableStateOf(true) }
-                    if (!isValidNearTo) {
-                        Text(
-                            text = "يحب الايزيد طول الحقل اكثر من 100 حرف",
-                            color = Color.Red,
-                            fontSize = fontSize,
-                            modifier = Modifier.padding(start = 4.dp)
-                        )
-                    }
-
-                    OutlinedTextField(
-                        value = nearto.value,
-                        onValueChange = { nearto.value = it
-                            isValidNearTo = nearto.value.length < 100
-                        },
-                        label = { Text("بالقرب من / مركز معروف / محل / منزل") },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 5,
-
-                        singleLine = false,
-                        isError = !isValidNearTo,
-                    )
-
-
-                    var isValidPhone by remember { mutableStateOf(true) }
-                    if (!isValidPhone) {
-                        Text(
-                            fontSize = fontSize,
-                            text = "الرجاء إدخال رقم هاتف صحيح (يجب أن يتكون من 9 أرقام ويبدأ بـ 70, 71, 73, 77, أو 78)",
-                            color = Color.Red,
-                            modifier = Modifier.padding(start = 10.dp)
-                        )
-                    }
                     Button(
                         onClick = {
                             if (locationTypes.value.isEmpty())
@@ -412,6 +382,52 @@ private fun add() {
                             color = Color.White, fontSize = 18.sp,fontFamily = FontFamily(
                                 Font(R.font.bukra_bold)))
                     }
+
+                    var isValidNearTo by remember { mutableStateOf(true) }
+                    if (!isValidNearTo) {
+                        Text(
+                            text = "يحب الايزيد طول الحقل اكثر من 100 حرف",
+                            color = Color.Red,
+                            fontSize = fontSize,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+                    }
+
+                    OutlinedTextField(
+                        value = nearto.value,
+                        onValueChange = { nearto.value = it
+                            isValidNearTo = nearto.value.length < 100
+                        },
+                        label = { Text(if (selectedLocationType.value  != null && selectedLocationType.value!!.name.contains("سيارة")) "رقم السيارة ونوعها ولونها" else "بالقرب من / مركز معروف / محل / منزل") },
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 5,
+
+                        singleLine = false,
+                        isError = !isValidNearTo,
+                    )
+
+                    OutlinedTextField(
+                        value = street.value,
+                        onValueChange = { s->street.value = s
+                            isValidStreet = street.value.length < 20
+                        },
+                        label = { Text("الشارع") },
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = !isValidStreet,
+                    )
+
+
+
+                    var isValidPhone by remember { mutableStateOf(true) }
+                    if (!isValidPhone) {
+                        Text(
+                            fontSize = fontSize,
+                            text = "الرجاء إدخال رقم هاتف صحيح (يجب أن يتكون من 9 أرقام ويبدأ بـ 70, 71, 73, 77, أو 78)",
+                            color = Color.Red,
+                            modifier = Modifier.padding(start = 10.dp)
+                        )
+                    }
+
                     OutlinedTextField(
                         value = contact.value,
                         onValueChange = {
@@ -505,7 +521,7 @@ private fun add() {
         lat.value = latitude
         location.value = LatLng(lat.value.toDouble(), long.value.toDouble())
         makerState.value.position = LatLng(lat.value.toDouble(), long.value.toDouble())
-        cameraPositionState.value.position = CameraPosition.fromLatLngZoom(location.value, 15f)
+        cameraPositionState.value.position = CameraPosition.fromLatLngZoom(location.value, 16f)
     }
 
     //

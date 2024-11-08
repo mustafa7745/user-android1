@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import com.yemen_restaurant.greenland.shared.RequestServer
 import com.yemen_restaurant.greenland.shared.StateController
 import com.yemen_restaurant.greenland.shared.Urls
 import com.yemen_restaurant.greenland.ui.theme.GreenlandRestaurantTheme
+import com.yemen_restaurant.greenland.viewModels.HomeComponentViewModel
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.MultipartBody
@@ -40,6 +42,7 @@ import okhttp3.MultipartBody
 class AddNameActivity : ComponentActivity() {
     val stateController = StateController()
     private val requestServer = RequestServer(this)
+//    private val homeComponentViewModel: HomeComponentViewModel by viewModels()
     val name = mutableStateOf("")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

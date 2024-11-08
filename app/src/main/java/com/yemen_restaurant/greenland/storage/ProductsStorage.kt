@@ -7,6 +7,7 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import com.yemen_restaurant.greenland.activities.getCurrentDate
 import com.yemen_restaurant.greenland.models.ProductImageModel
 import com.yemen_restaurant.greenland.models.ProductModel
 import java.time.LocalDateTime
@@ -15,16 +16,16 @@ import java.time.format.DateTimeParseException
 
 class ProductsStorage(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
-    val currenctDate: LocalDateTime = LocalDateTime.now()
-//    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
-
-
-    // Get the current timestamp
-//    val currentTimestamp = LocalDateTime.now().format(formatter)
+//    val currenctDate: LocalDateTime = LocalDateTime.now()
+////    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+//
+//
+//    // Get the current timestamp
+////    val currentTimestamp = LocalDateTime.now().format(formatter)
 
     companion object {
         private const val DATABASE_NAME = "products.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
         private const val TABLE_PRODUCTS = "products"
         private const val TABLE_PRODUCT_IMAGES = "product_images"
 
@@ -37,6 +38,7 @@ class ProductsStorage(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
         const val COLUMN_IS_AVAILABLE = "isAvailable"
         const val COLUMN_GROUP_ID = "products_groupsId"
         const val COLUMN_GROUP_NAME = "products_groupsName"
+        const val COLUMN_DESCRIPTION_NAME = "description"
         const val COLUMN_CREATED_AT = "createdAt"
         const val COLUMN_UPDATED_AT = "updatedAt"
 
@@ -56,6 +58,7 @@ class ProductsStorage(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
                 + "$COLUMN_IS_AVAILABLE TEXT,"
                 + "$COLUMN_GROUP_ID TEXT,"
                 + "$COLUMN_GROUP_NAME TEXT,"
+                + "$COLUMN_DESCRIPTION_NAME TEXT,"
                 + "$COLUMN_CREATED_AT TEXT,"
                 + "$COLUMN_UPDATED_AT TEXT)")
         db.execSQL(createProductsTable)
@@ -87,19 +90,16 @@ class ProductsStorage(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
         values.put(COLUMN_IS_AVAILABLE, product.isAvailable)
         values.put(COLUMN_GROUP_ID, product.products_groupsId)
         values.put(COLUMN_GROUP_NAME, product.products_groupsName)
-        values.put(COLUMN_CREATED_AT, currenctDate.toString())
+        values.put(COLUMN_DESCRIPTION_NAME, product.description)
+        values.put(COLUMN_CREATED_AT, getCurrentDate().toString())
 
         // Insert product and get its ID
         val productId = db.insert(TABLE_PRODUCTS, null, values)
 
         // Add product images
         product.productImages.forEach { image ->
-            Log.e("immmmage",image.toString())
             addProductImage(product.id, image.image)
         }
-
-//        db.close()
-        Log.e("resss0",productId.toString())
         return productId
     }
 
@@ -111,9 +111,9 @@ class ProductsStorage(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
         values.put(COLUMN_IMAGE_URL, imageUrl) // Assuming ProductImageModel has an imageUrl property
 
         val result = db.insert(TABLE_PRODUCT_IMAGES, null, values)
-        Log.e("done",productId + " "+ imageUrl,)
-//        db.close()
-        Log.e("resss1",result.toString())
+//        Log.e("done",productId + " "+ imageUrl,)
+////        db.close()
+//        Log.e("resss1",result.toString())
         return result
     }
 
@@ -139,7 +139,38 @@ class ProductsStorage(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
                     products_groupsId = cursor.getString(cursor.getColumnIndex(COLUMN_GROUP_ID)),
                     products_groupsName = cursor.getString(cursor.getColumnIndex(COLUMN_GROUP_NAME)),
                     productImages = productImages,
-                    description = ""
+                    description = cursor.getString(cursor.getColumnIndex(COLUMN_DESCRIPTION_NAME))
+                )
+                productList.add(product)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+//        db.close()
+        return productList
+    }
+
+    @SuppressLint("Range")
+    fun getProducts(): List<ProductModel> {
+        val productList = mutableListOf<ProductModel>()
+        val db = this.readableDatabase
+        val cursor: Cursor = db.query(TABLE_PRODUCTS, null,null, null, null, null, null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val productId = cursor.getString(cursor.getColumnIndex(COLUMN_ID))
+                val productImages = getProductImages(productId)
+
+                val product = ProductModel(
+                    id = productId,
+                    name = cursor.getString(cursor.getColumnIndex(COLUMN_NAME)),
+                    prePrice = cursor.getString(cursor.getColumnIndex(COLUMN_PRE_PRICE)),
+                    postPrice = cursor.getString(cursor.getColumnIndex(COLUMN_POST_PRICE)),
+                    categoryId = cursor.getString(cursor.getColumnIndex(COLUMN_CATEGORY_ID)),
+                    isAvailable = cursor.getString(cursor.getColumnIndex(COLUMN_IS_AVAILABLE)),
+                    products_groupsId = cursor.getString(cursor.getColumnIndex(COLUMN_GROUP_ID)),
+                    products_groupsName = cursor.getString(cursor.getColumnIndex(COLUMN_GROUP_NAME)),
+                    productImages = productImages,
+                    description = cursor.getString(cursor.getColumnIndex(COLUMN_DESCRIPTION_NAME))
                 )
                 productList.add(product)
             } while (cursor.moveToNext())
@@ -152,16 +183,16 @@ class ProductsStorage(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
     // Function to get product images by product ID
     @SuppressLint("Range")
     private fun getProductImages(productId: String): List<ProductImageModel> {
-        Log.e("start","start")
+//        Log.e("start","start")
         val images = mutableListOf<ProductImageModel>()
         val db = this.readableDatabase
         val cursor: Cursor = db.query(TABLE_PRODUCT_IMAGES, null, "$COLUMN_PRODUCT_ID=?", arrayOf(productId), null, null, null)
-        Log.e("cursor",cursor.count.toString())
+//        Log.e("cursor",cursor.count.toString())
         if (cursor.moveToFirst()) {
-            Log.e("first","1")
+//            Log.e("first","1")
             do {
                 val imageUrl = cursor.getString(cursor.getColumnIndex(COLUMN_IMAGE_URL))
-                Log.e("dddd",imageUrl)
+//                Log.e("dddd",imageUrl)
                 images.add(ProductImageModel(imageUrl)) // Assuming ProductImageModel has an imageUrl property
             } while (cursor.moveToNext())
         }
@@ -186,6 +217,16 @@ class ProductsStorage(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
         return result
     }
 
+    fun deleteProducts(): Int {
+        val db = this.writableDatabase
+        db.delete(TABLE_PRODUCT_IMAGES, null, null)
+
+        // Now delete products
+        val result = db.delete (TABLE_PRODUCTS, null,null)
+//        db.close()
+        return result
+    }
+
     // Function to get creation times for products by category ID
     @SuppressLint("Range")
     fun getTimeWhenStoredByCategoryId(categoryId: String): List<String> {
@@ -202,22 +243,6 @@ class ProductsStorage(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
 //        db.close()
         return times
     }
-    fun getLocalDateTime(): LocalDateTime? {
-        // Define the expected format of the date-time string, including milliseconds
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
-
-        return try {
-
-            val s =  LocalDateTime.parse(currenctDate.toString(), formatter)
-            Log.e("dfrf",s.toString())
-            s
-
-        } catch (e: DateTimeParseException) {
-            println("Error parsing date: ${e.message}")
-            null // Return null in case of a parsing error
-        }
-    }
-
 }
 
 //

@@ -75,7 +75,7 @@ class ChangeMapLocationActivity : ComponentActivity() {
                 var location = LatLng(lat.value.toDouble(),long.value.toDouble() )
                 val markerState = rememberMarkerState(position = location)
                 var cameraPositionState = rememberCameraPositionState {
-                    position = CameraPosition.fromLatLngZoom(location, 15f)
+                    position = CameraPosition.fromLatLngZoom(location, 16f)
                 }
 
 
