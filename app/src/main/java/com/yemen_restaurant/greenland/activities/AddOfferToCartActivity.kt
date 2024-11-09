@@ -24,11 +24,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
@@ -67,6 +69,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -84,29 +87,40 @@ import com.google.android.gms.location.SettingsClient
 import com.google.android.gms.tasks.Task
 import com.yemen_restaurant.greenland.R
 import com.yemen_restaurant.greenland.models.LocationTypeModel
+import com.yemen_restaurant.greenland.models.OfferModel
+import com.yemen_restaurant.greenland.models.OfferProductsModel
 import com.yemen_restaurant.greenland.models.ProductModel
 import com.yemen_restaurant.greenland.models.UserLocationModel
 import com.yemen_restaurant.greenland.shared.MyJson
 import com.yemen_restaurant.greenland.shared.ProductInCart
 import com.yemen_restaurant.greenland.shared.RequestServer
 import com.yemen_restaurant.greenland.shared.StateController
+import com.yemen_restaurant.greenland.shared.Urls
+import com.yemen_restaurant.greenland.storage.OfferProductsStorage
 import com.yemen_restaurant.greenland.ui.theme.GreenlandRestaurantTheme
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import okhttp3.MultipartBody
+import java.time.Duration
 
 
-class AddToCartActivity : ComponentActivity() {
+class AddOfferToCartActivity : ComponentActivity() {
     val stateController = StateController()
     val requestServer = RequestServer(this)
-    lateinit var product:ProductModel
+    lateinit var offerModel: OfferModel
+    val offerProductsStorage : OfferProductsStorage = OfferProductsStorage()
+    private val offerProducts = mutableStateOf<List<OfferProductsModel>>(listOf())
 
-    @OptIn(ExperimentalFoundationApi::class)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val intent = intent
-        val str = intent.getStringExtra("product")
+        val str = intent.getStringExtra("offer")
         if (str != null) {
             try {
-                product = MyJson.IgnoreUnknownKeys.decodeFromString(str)
+                offerModel = MyJson.IgnoreUnknownKeys.decodeFromString(str)
             }catch (e:Exception){
                 finish()
             }
@@ -115,162 +129,67 @@ class AddToCartActivity : ComponentActivity() {
             finish()
         }
 
+        checkIfNeedUpdate()
         setContent {
             GreenlandRestaurantTheme {
-                MainCompose2(padding = 0.dp, stateController =stateController , activity = this@AddToCartActivity ) {
-                    Scaffold (
-//                        floatingActionButton = {
-//                            FloatingActionButton(onClick = { /*TODO*/ }) {
-//                                CartButton()
-//                            }
-//
-//                        }
-                    ){p->
-                        Column(
-                            Modifier.padding(p)
-                        ) {
-                            MainContent()
-                        }
+                MainCompose1(padding = 0.dp, stateController = stateController, activity = this, read = { read() }){
+                    Column(
+                    ) {
+                        MainContent()
                     }
-
-
                 }
             }
+        }
+    }
+
+    private fun checkIfNeedUpdate() {
+        if (offerProductsStorage.isSet()) {
+            val diff = Duration.between(offerProductsStorage.getDate(), getCurrentDate()).toMinutes()
+            if (diff > 1) {
+                read()
+            } else {
+                offerProducts.value = offerProductsStorage.get()
+                stateController.successState()
+            }
+        } else {
+            read()
+        }
+    }
+    private fun read() {
+        stateController.startRead()
+        val data3 : JsonObject = buildJsonObject {
+            put("tag", "read")
+            put("inputOfferId",offerModel.id)
+        }
+
+        val body1 = MultipartBody.Builder().setType(MultipartBody.FORM)
+            .addFormDataPart("data3", data3.toString())
+            .build()
+
+        requestServer.request2(body1, Urls.offersProductsUrl,{ code, it->
+            stateController.errorStateRead(it)
+        }){
+
+            offerProducts.value =  MyJson.IgnoreUnknownKeys.decodeFromString(it)
+            offerProductsStorage.set(it)
+            stateController.successState()
         }
     }
 
     @Composable
     @OptIn(ExperimentalFoundationApi::class)
     private fun MainContent() {
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(8.dp)
         ) {
-            LazyColumn(
-                Modifier.padding(bottom = 50.dp),
-                content = {
-                    item {
-                        val pagerState =
-                            rememberPagerState(pageCount = { product.productImages.size })
-                        if (product.productImages.isEmpty())
-                            AsyncImage(
-                                model = R.drawable.logo,
-                                contentDescription = "",
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                contentScale = ContentScale.Inside
-                            )
-                        else
-                            HorizontalPager(
-                                pagerState,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(1F)
-                            ) { i ->
-                                Card(
-                                    Modifier
-                                        .fillMaxSize()
-                                        .border(
-                                            1.dp,
-                                            MaterialTheme.colorScheme.primary,
-                                            RoundedCornerShape(
-                                                16.dp
-                                            )
-                                        )
-                                        .clip(
-                                            RoundedCornerShape(
-                                                16.dp
-                                            )
-                                        )
-                                        .padding(5.dp),
-                                    colors = CardColors(
-                                        containerColor = Color.White,
-                                        contentColor = Color.Black,
-                                        disabledContainerColor = Color.Blue,
-                                        disabledContentColor = Color.Cyan
-                                    )
-                                ) {
-                                    CustomImageView(
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        context = this@AddToCartActivity,
-                                        imageUrl = product.productImages[i].image,
-                                        okHttpClient = requestServer.createOkHttpClientWithCustomCert()
-                                    )
-
-                                }
-
-                            }
-                    }
-                    item {
-                        Text(
-                            modifier = Modifier.padding(8.dp),
-                            text = (product.name),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = Color.Black
-                        )
-                    }
-                    item {
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row {
-                                Text(
-                                    modifier = Modifier.padding(8.dp),
-                                    text = "السعر: ",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    modifier = Modifier.padding(8.dp),
-                                    text = formatPrice(product.postPrice) + " ريال ",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp,
-                                    color = Color.Black
-                                )
-                            }
-                            CartButton(this@AddToCartActivity)
-                        }
-                    }
-                    if (product.description != null)
-                        item {
-                            HorizontalDivider()
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(5.dp)
-                            ) {
-                            }
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(5.dp)
-                            ) {
-                                Text(
-                                    modifier = Modifier.padding(8.dp),
-                                    text = "التفاصيل: ",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    modifier = Modifier.padding(8.dp),
-                                    text = product.description!!,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp,
-                                    color = Color.Black
-                                )
-                            }
-                        }
-
-                })
+            LazyColumn {
+                itemsIndexed(offerProducts.value){ index,item ->
+                    ProductOfferCard(item)
+                }
+            }
 
             Row(
                 Modifier
@@ -286,9 +205,133 @@ class AddToCartActivity : ComponentActivity() {
                     ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
-
                 AddToCartUi()
+            }
+        }
+    }
+
+    @Composable
+    private fun ProductOfferCard(product: OfferProductsModel) {
+        Card(
+            Modifier
+                .fillMaxWidth()
+                .padding(5.dp)
+        ) {
+            Card(
+                Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+                    .padding(5.dp)
+                    .clickable {
+//                        if (product.products_groupsName != "الرئيسية") {
+//                            if (isShowSubProducts.value) {
+//                                goToAddToCart(product)
+//                            } else {
+//                                groupId = product.products_groupsId
+//                                isShowSearch.value = false
+//                                isShowSubProducts.value = true
+//                            }
+//                        } else {
+//                            goToAddToCart(product)
+//                        }
+                    },
+                colors = CardColors(
+                    containerColor = Color.White,
+                    contentColor = Color.Black,
+                    disabledContainerColor = Color.Blue,
+                    disabledContentColor = Color.Cyan
+                )
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(5.dp)
+                ) {
+
+                    Column(
+                        Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(0.6F),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        horizontalAlignment = Alignment.Start,
+                    ) {
+                        Text(
+                            modifier = Modifier
+                                .padding(3.dp),
+                            //                                                            .align(
+                            //                                                                Alignment.TopStart
+                            //                                                            ),
+                            textAlign = TextAlign.Start,
+                            text = product.product.name,
+                            fontSize = 12.sp,
+                            color = Color.Black,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1
+                        )
+                        if (product.product.description != null) {
+                            Text(
+                                text = product.product.description,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 8.sp,
+                                color = Color.Gray,
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis
+
+                            )
+                        }
+
+
+
+                        Row(
+                            horizontalArrangement = Arrangement.Start,
+                        ) {
+                            Text(
+                                text = formatPrice(product.product.postPrice) + " ريال ",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            if (cartController3.products.value.find { it.productsModel == product.product} != null) {
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Icon(
+                                    imageVector = Icons.Outlined.ShoppingCart,
+                                    contentDescription = "",
+                                    tint = Color.Blue
+                                )
+                            }
+                            if (product.product.isAvailable == "0") {
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = "غير متوفر حاليا",
+                                    fontSize = 8.sp,
+                                    color = Color.Red
+                                )
+                            }
+                        }
+                    }
+
+                    if (product.product.productImages.isNotEmpty()) {
+                        CustomImageView(
+                            modifier = Modifier
+                                .size(150.dp),
+                            context = this@AddOfferToCartActivity,
+                            imageUrl = product.product.productImages.first().image,
+                            okHttpClient = requestServer.createOkHttpClientWithCustomCert()
+                        )
+                    } else {
+                        AsyncImage(
+                            model = R.drawable.logo,
+                            contentDescription = "",
+                            modifier = Modifier
+                                .size(120.dp)
+                                .padding(5.dp),
+                            contentScale = ContentScale.Inside
+                        )
+                    }
+
+                }
             }
         }
     }
@@ -296,16 +339,15 @@ class AddToCartActivity : ComponentActivity() {
     @Composable
     fun AddToCartUi(
     ) {
-        if (product.isAvailable == "1"){
             val foundItem =
-                cartController3.products.value.find { it.productsModel == product }
+                cartController3.offers.value.find { it.offerModel == offerModel }
             if (foundItem == null) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.White)
                         .clickable {
-                            cartController3.addProduct((product))
+                            cartController3.addOffer((offerModel))
                         },
                     contentAlignment = Alignment.Center,
                 )
@@ -335,7 +377,7 @@ class AddToCartActivity : ComponentActivity() {
                 ) {
 
                     IconButton(onClick = {
-                        cartController3.incrementProductQuantity(product.id)
+                        cartController3.incrementProductQuantity(offerModel.id)
                     }) {
                         Icon(
                             modifier =
@@ -356,9 +398,9 @@ class AddToCartActivity : ComponentActivity() {
                             contentDescription = ""
                         )
                     }
-                    Text(text = foundItem.productCount.value.toString())
+                    Text(text = foundItem.offerCount.value.toString())
                     IconButton(onClick = {
-                        cartController3.decrementProductQuantity(product.id)
+                        cartController3.decrementProductQuantity(offerModel.id)
                     }) {
                         Icon(
                             modifier =
@@ -385,7 +427,7 @@ class AddToCartActivity : ComponentActivity() {
                     }
                     IconButton(
                         onClick = {
-                            cartController3.removeProduct(product.id)
+                            cartController3.removeProduct(offerModel.id)
                         }) {
                         Icon(
                             imageVector = Icons.Outlined.Delete,
@@ -395,16 +437,7 @@ class AddToCartActivity : ComponentActivity() {
                     }
                 }
         }
-        }
-        else{
-            Text(
-                text = "غير متوفر حاليا",
-                fontSize = 14.sp,
-                color = Color.Red,
-                textAlign = TextAlign.Center,
-              modifier =  Modifier.fillMaxSize()
-            )
-        }
+
     }
 }
 

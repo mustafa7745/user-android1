@@ -26,6 +26,9 @@
             android:name=".activities.AddToCartActivity"
             android:exported="false"/>
         <activity
+            android:name=".activities.AddOfferToCartActivity"
+            android:exported="false"/>
+        <activity
             android:name=".activities.AddNameActivity"
             android:exported="false"
             android:screenOrientation="portrait" />

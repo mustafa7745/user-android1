@@ -107,7 +107,7 @@ class HomeComponentViewModel: ViewModel() {
         if (homeComponentStorage.isSetHomeComponent()) {
             val diff =
                 Duration.between(homeComponentStorage.getDate(), getCurrentDate()).toMinutes()
-            if (diff <= 1) {
+            if (diff <= 5) {
                 Log.e("procssed", diff.toString())
                 homeComponent = homeComponentStorage.getHomeComponent()
                 homeComponent.products = productsStorage.getProducts();

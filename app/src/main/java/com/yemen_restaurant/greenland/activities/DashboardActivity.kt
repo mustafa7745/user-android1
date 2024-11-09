@@ -44,27 +44,39 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -98,6 +110,7 @@ import com.google.maps.android.compose.rememberMarkerState
 import com.yemen_restaurant.greenland.R
 import com.yemen_restaurant.greenland.application.MyApplication
 import com.yemen_restaurant.greenland.models.HomeComponent
+import com.yemen_restaurant.greenland.models.OfferModel
 import com.yemen_restaurant.greenland.models.ProductModel
 import com.yemen_restaurant.greenland.models.User
 import com.yemen_restaurant.greenland.shared.CartController3
@@ -115,6 +128,8 @@ import com.yemen_restaurant.greenland.synclist.convertToCategoryStructure
 import com.yemen_restaurant.greenland.synclist.lazyListTabSync
 import com.yemen_restaurant.greenland.ui.theme.GreenlandRestaurantTheme
 import com.yemen_restaurant.greenland.viewModels.HomeComponentViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -144,6 +159,8 @@ class DashboardActivity : ComponentActivity() {
 
 
 
+    val drawerState = mutableStateOf(DrawerState(initialValue = DrawerValue.Closed))
+
     @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -171,11 +188,58 @@ class DashboardActivity : ComponentActivity() {
        homeComponentViewModel.checkIfNeedUpdate(requestServer, goToAddName = {goToAddName()})
         setContent {
             GreenlandRestaurantTheme {
+                ModalNavigationDrawer(
+                    drawerState = drawerState.value,
+                    drawerContent = {
+                        ModalDrawerSheet(
+                        ) {
+//                                                Text("Drawer title", modifier = Modifier.padding(16.dp) .fillMaxWidth(0.5F))
+//
+//                                                HorizontalDivider()
+//                                                NavigationDrawerItem(
+//                                                    label = { Text(text = "Drawer Item") },
+//                                                    selected = false,
+//                                                    onClick = { /*TODO*/ }
+//                                                )
+//                                                // ...other drawer items
+                        }
+                    }
+                ) {
+                    MainCompose1(padding = 0.dp, stateController = homeComponentViewModel.stateController, activity = this@DashboardActivity, read = { homeComponentViewModel.read(requestServer, goToAddName = { goToAddName() }) }){
 
-
-                                MainCompose1(padding = 0.dp, stateController = homeComponentViewModel.stateController, activity = this@DashboardActivity, read = { homeComponentViewModel.read(requestServer, goToAddName = { goToAddName() }) }){
-
-
+                        ImagesAndName()
+//                                    ModalNavigationDrawer(
+//                                        drawerState = drawerState.value,
+//                                        drawerContent = {
+//                                            ModalDrawerSheet(
+//                                            ) {
+////                                                Text("Drawer title", modifier = Modifier.padding(16.dp) .fillMaxWidth(0.5F))
+////
+////                                                HorizontalDivider()
+////                                                NavigationDrawerItem(
+////                                                    label = { Text(text = "Drawer Item") },
+////                                                    selected = false,
+////                                                    onClick = { /*TODO*/ }
+////                                                )
+////                                                // ...other drawer items
+//                                            }
+//                                        }
+//                                    ) {
+//                                        Scaffold {
+//                                            Column(Modifier.fillMaxSize()) {
+//                                                ImagesAndName()
+//                                            }
+//
+//                                        }
+////
+//
+//                                        // Screen content
+//                                    }
+//                                    Scaffold(
+//                                        drawerContent = {}
+//                                    ) {
+//
+//                                    }
 
 
 //                                    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
@@ -194,7 +258,7 @@ class DashboardActivity : ComponentActivity() {
 //
 //
 //                                    }
-                                    ImagesAndName()
+//                                    ImagesAndName()
 //                                    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
 //                                        rememberTopAppBarState())
 //                                    Log.e("sdsd",scrollBehavior.state.collapsedFraction.toString())
@@ -295,17 +359,29 @@ class DashboardActivity : ComponentActivity() {
 ////                                        Categories()
 //                                    })
 
-                                    if (isShowSubProducts.value) {
+                        if (isShowSubProducts.value) {
 //                                modalList(cart)
-                                        modalListV2()
-                                    }
-                                    if (isShowSearch.value){
-                                        SearchDialog(
-                                            onDismiss = { isShowSearch.value = false }
-                                        )
-                                    }
+                            modalListV2()
+                        }
+                        if (isShowSearch.value){
+                            SearchDialog(
+                                onDismiss = { isShowSearch.value = false }
+                            )
+                        }
 
-                                }
+                    }
+
+//                    Scaffold {
+//                        Column(Modifier.fillMaxSize()) {
+//
+//                        }
+//
+//                    }
+//
+
+                    // Screen content
+                }
+
 
                         }
         }
@@ -451,35 +527,138 @@ class DashboardActivity : ComponentActivity() {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .animatedBorder(
-                        borderColors = listOf(Color.Red, Color.Green, Color.Blue),
-                        backgroundColor = Color.White,
-                        shape = RoundedCornerShape(0.dp, 0.dp, 15.dp, 15.dp),
-                        borderWidth = 4.dp,
-                        animationDurationInMillis = 5000
-                    ),
+//                    .animatedBorder(
+//                        borderColors = listOf(Color.Red, Color.Green, Color.Blue),
+//                        backgroundColor = Color.White,
+//                        shape = RoundedCornerShape(0.dp, 0.dp, 15.dp, 15.dp),
+//                        borderWidth = 4.dp,
+//                        animationDurationInMillis = 5000
+//                    ),
             ) {
                 Row(
 
-                    horizontalArrangement = Arrangement.Start,
+                    Modifier.padding(8.dp).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AsyncImage(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .padding(10.dp), model = R.drawable.user, contentDescription = null
-                    )
-                    userName.value =
-                        if (homeComponentViewModel.homeComponent.user!!.name2 != null) homeComponentViewModel.homeComponent.user!!.name2.toString()
-                        else homeComponentViewModel.homeComponent.user!!.name
+                    Row (
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Row (
+                            Modifier.border(
+                                1.dp,
+                                MaterialTheme.colorScheme.primary,
+                                RoundedCornerShape(
+                                    16.dp
+                                )
+                            )
+                                .clip(
+                                    RoundedCornerShape(
+                                        16.dp
+                                    )
+                                ),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ){
+                            val scope = rememberCoroutineScope()
+                            IconButton(modifier =  Modifier.size(50.dp),onClick = {
+
+                                scope.launch {
+                                    drawerState.value.open()
+//                                    if (drawerState.isClosed) {
+//                                        drawerState.value.open()  // Open the drawer
+//                                    } else {
+//                                        drawerState.value.close() // Close the drawer
+//                                    }
+                                }
+                            }){
+                                Icon(
+                                    modifier =  Modifier.padding(5.dp),
+                                    imageVector = Icons.Outlined.MoreVert,
+                                    contentDescription = "",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                           AsyncImage(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .padding(5.dp), model = R.drawable.logo, contentDescription = null
+                        )
+
+                        }
+//                        AsyncImage(
+//                            modifier = Modifier
+//                                .size(50.dp)
+//                                .padding(10.dp), model = R.drawable.user, contentDescription = null
+//                        )
+                        userName.value =
+                            if (homeComponentViewModel.homeComponent.user!!.name2 != null) homeComponentViewModel.homeComponent.user!!.name2.toString()
+                            else homeComponentViewModel.homeComponent.user!!.name
+
+//                        Text(
+//                            maxLines = 1,
+//                            overflow = TextOverflow.Ellipsis,
+//                            modifier = Modifier.padding(3.dp),
+//                            text = "مرحبا بك: ${userName.value}"
+//                        )
+                    }
+                    Row (
+                        Modifier.border(
+                            1.dp,
+                            MaterialTheme.colorScheme.primary,
+                            RoundedCornerShape(
+                                16.dp
+                            )
+                        )
+                            .clip(
+                                RoundedCornerShape(
+                                    16.dp
+                                )
+                            ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Spacer(Modifier.width(5.dp))
+
+                        Text(
+                            modifier = Modifier
+
+                                .padding(2.dp),
+                            color = Color.Black,
+                            text = (cartController3.products.value.size + cartController3.offers.value.size).toString()
+                        )
+                        IconButton(modifier =  Modifier.size(50.dp),onClick = {
+
+                            isShowSearch.value = true
+//                        isShowSea
+                        }){
+                            Icon(
+                                modifier =  Modifier.padding(5.dp),
+                                imageVector = Icons.Outlined.ShoppingCart,
+                                contentDescription = "",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
 
 
-                    Text(
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(3.dp),
-                        text = "مرحبا بك: ${userName.value}"
-                    )
+
+                        IconButton(modifier =  Modifier.size(50.dp),onClick = {
+
+                            isShowSearch.value = true
+//                        isShowSea
+                        }){
+                            Icon(
+                                modifier =  Modifier.padding(5.dp),
+                                imageVector = Icons.Outlined.Search,
+                                contentDescription = "",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+
+                    }
+
+
                 }
                 if (homeComponentViewModel.homeComponent.user!!.name2 == null)
                     Text(
@@ -493,59 +672,65 @@ class DashboardActivity : ComponentActivity() {
                         overflow = TextOverflow.Ellipsis,
                     )
                 HorizontalDivider()
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(count), content = {
-                        item {
-                            CartButton(this@DashboardActivity)
-                        }
-                        item {
-                            Column(
-                                Modifier
-                                    .padding(3.dp)
-                                    .width(20.dp)
-                                    .clickable {
-                                        val intent = Intent(
-                                            this@DashboardActivity,
-                                            OrdersActivity::class.java
-                                        )
-                                        startActivity(intent)
-
-                                    },
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                AsyncImage(
-                                    modifier = Modifier
-                                        .size(50.dp)
-                                        .padding(10.dp),
-                                    model = R.drawable.orders,
-                                    contentDescription = null
-                                )
-                                Text(text = "الطلبات", fontSize = 10.sp)
-                            }
-                        }
-                        item {
-                            Column(
-                                Modifier
-                                    .padding(3.dp)
-                                    .width(20.dp)
-                                    .clickable {
-                                        isShowSearch.value = true
-                                    },
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                AsyncImage(
-                                    modifier = Modifier
-                                        .size(50.dp)
-                                        .padding(10.dp),
-                                    model = R.drawable.search,
-                                    contentDescription = null
-                                )
-                                Text(text = "بحث", fontSize = 10.sp)
-                            }
-                        }
-                    })
+//                LazyVerticalGrid(
+//                    columns = GridCells.Fixed(count), content = {
+//                        item {
+//                            CartButton(this@DashboardActivity)
+//                        }
+//                        item {
+//                            Column(
+//                                Modifier
+//                                    .padding(3.dp)
+//                                    .width(20.dp)
+//                                    .clickable {
+//                                        val intent = Intent(
+//                                            this@DashboardActivity,
+//                                            OrdersActivity::class.java
+//                                        )
+//                                        startActivity(intent)
+//
+//                                    },
+//                                horizontalAlignment = Alignment.CenterHorizontally,
+//                                verticalArrangement = Arrangement.Center
+//                            ) {
+//                                AsyncImage(
+//                                    modifier = Modifier
+//                                        .size(50.dp)
+//                                        .padding(10.dp),
+//                                    model = R.drawable.orders,
+//                                    contentDescription = null
+//                                )
+//                                Text(text = "الطلبات", fontSize = 10.sp)
+//                            }
+//                        }
+//                        item {
+//                            Column(
+//                                Modifier
+//                                    .padding(3.dp)
+//                                    .width(20.dp)
+//                                    .clickable {
+//                                        isShowSearch.value = true
+//                                    },
+//                                horizontalAlignment = Alignment.CenterHorizontally,
+//                                verticalArrangement = Arrangement.Center
+//                            ) {
+//                                Icon(
+//                                    modifier =  Modifier.padding(10.dp) ,
+//                                    imageVector = Icons.Outlined.Search,
+//                                    contentDescription = "",
+//                                    tint = MaterialTheme.colorScheme.primary
+//                                )
+////                                AsyncImage(
+////                                    modifier = Modifier
+////                                        .size(50.dp)
+////                                        .padding(10.dp),
+////                                    model = R.drawable.search,
+////                                    contentDescription = null
+////                                )
+//                                Text(text = "بحث", fontSize = 10.sp)
+//                            }
+//                        }
+//                    })
             }
     }
 
@@ -560,7 +745,7 @@ class DashboardActivity : ComponentActivity() {
 
     @Composable
     private fun OffersContent() {
-        Text(text = "العروض")
+        Text(text = "عروض مميزة")
         HorizontalDivider()
         LazyHorizontalGrid(
             horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -620,12 +805,13 @@ class DashboardActivity : ComponentActivity() {
                                 Modifier
                                     .fillMaxSize()
                                     .clickable {
-                                        val intent = Intent(
-                                            this@DashboardActivity,
-                                            OfferProductsActivity::class.java
-                                        )
-                                        intent.putExtra("offer", MyJson.MyJson.encodeToString(item))
-                                        startActivity(intent)
+                                        goToAddOfferToCart(item)
+//                                        val intent = Intent(
+//                                            this@DashboardActivity,
+//                                            OfferProductsActivity::class.java
+//                                        )
+//                                        intent.putExtra("offer", MyJson.MyJson.encodeToString(item))
+//                                        startActivity(intent)
                                     }) {
                                 CustomImageView(
                                     context = this@DashboardActivity,
@@ -667,15 +853,32 @@ class DashboardActivity : ComponentActivity() {
 
     @Composable
     private fun AdsContent() {
-        LazyHorizontalGrid(
+
+        // State for tracking the current index
+        var currentIndex by remember { mutableStateOf(0) }
+
+        // LazyRow for displaying images
+        val scrollState = rememberLazyListState()
+
+        // Automatically scroll every 3 seconds
+        LaunchedEffect(key1 = currentIndex) {
+            delay(3000) // Delay to move to the next image
+            val nextIndex = if (currentIndex == homeComponentViewModel.homeComponent.ads.size - 1) 0 else currentIndex + 1
+            scrollState.animateScrollToItem(nextIndex)
+            currentIndex = nextIndex
+        }
+
+        LazyRow (
+            state = scrollState,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp),
-            rows = GridCells.Fixed(1), content = {
+                ,
+//            rows = GridCells.Fixed(1),
+            content = {
                 itemsIndexed(homeComponentViewModel.homeComponent.ads) { index, item ->
                     Card(
                         Modifier
-                            .height(150.dp)
+                            .height(175.dp)
                             .width(300.dp)
                             .padding(5.dp)
 
@@ -684,6 +887,22 @@ class DashboardActivity : ComponentActivity() {
                             Modifier
                                 .fillMaxSize()
                                 .clickable {
+                                    if (item.type != null && item.product_cat_id != null){
+                                        if (item.type == "1"){
+                                            homeComponentViewModel.homeComponent.products.find { it.id == item.product_cat_id }
+                                                ?.let { goToAddToCart(it) }
+                                        }
+                                        else if(item.type == "2"){
+//                                            val category = homeComponentViewModel.homeComponent.categories.find { it.id == item.product_cat_id }
+//                                            if (category != null){
+////                                                onGoToCategory(homeComponentViewModel.homeComponent.categories.indexOf(category))
+//                                                onTabClicked(index, category)
+//
+//                                            }
+
+                                        }
+
+                                    }
 
                                 }) {
                             CustomImageView(
@@ -707,16 +926,16 @@ class DashboardActivity : ComponentActivity() {
             }
            }
 
+            HeaderComponent()
+
 
             AnimatedVisibility(visible = isVisible,
 //                exit = fadeOut(tween(durationMillis = 500)) + slideOutVertically(targetOffsetY = { it }, animationSpec = tween(500))
             ) {
-                Column {
-                    HeaderComponent()
-                    if (homeComponentViewModel.homeComponent.ads.isNotEmpty())
+                if (homeComponentViewModel.homeComponent.ads.isNotEmpty())
                     AdsContent()
-                }
             }
+
         Row(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
@@ -750,6 +969,55 @@ class DashboardActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(16.dp),
             content = {
                 itemsIndexed(homeComponentViewModel.cats) { index, s3 ->
+                    if (index == 0 || index == 5){
+                        if (homeComponentViewModel.homeComponent.offers.isNotEmpty())
+                            OffersContent()
+//                        LazyRow (
+//                            modifier = Modifier
+//                                .fillMaxWidth().height(175.dp)
+//                            ,
+//                            content = {
+//                                itemsIndexed(homeComponentViewModel.homeComponent.ads) { index, item ->
+//                                    Card(
+//                                        Modifier
+//                                            .height(175.dp)
+//                                            .width(300.dp)
+//                                            .padding(5.dp)
+//
+//                                    ) {
+//                                        Box(
+//                                            Modifier
+//                                                .fillMaxSize()
+//                                                .clickable {
+//                                                    if (item.type != null && item.product_cat_id != null){
+//                                                        if (item.type == "1"){
+//                                                            homeComponentViewModel.homeComponent.products.find { it.id == item.product_cat_id }
+//                                                                ?.let { goToAddToCart(it) }
+//                                                        }
+//                                                        else if(item.type == "2"){
+////                                            val category = homeComponentViewModel.homeComponent.categories.find { it.id == item.product_cat_id }
+////                                            if (category != null){
+//////                                                onGoToCategory(homeComponentViewModel.homeComponent.categories.indexOf(category))
+////                                                onTabClicked(index, category)
+////
+////                                            }
+//
+//                                                        }
+//
+//                                                    }
+//
+//                                                }) {
+//                                            CustomImageView(
+//                                                context = this@DashboardActivity,
+//                                                imageUrl = item.image,
+//                                                okHttpClient = requestServer.createOkHttpClientWithCustomCert(),
+//                                                modifier = Modifier.fillMaxSize()
+//                                            )
+//                                        }
+//                                    }
+//                                }
+//                            })
+                    }
                     Row (
                         Modifier
                             .fillMaxWidth(),
@@ -938,6 +1206,17 @@ class DashboardActivity : ComponentActivity() {
                 ImagesAndName2(newList2 = newList2)
             }
         }
+    }
+    private fun goToAddOfferToCart(
+        s: OfferModel
+    ) {
+
+        val intent = Intent(
+            this,
+            AddOfferToCartActivity::class.java
+        )
+        intent.putExtra("offer", MyJson.MyJson.encodeToString(s))
+        startActivity(intent)
     }
     private fun goToAddToCart(
         s: ProductModel
