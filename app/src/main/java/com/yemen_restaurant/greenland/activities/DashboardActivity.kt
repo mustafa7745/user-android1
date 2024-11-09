@@ -3,8 +3,10 @@ package com.yemen_restaurant.greenland.activities
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -47,11 +49,16 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.DrawerState
@@ -145,30 +152,20 @@ class DashboardActivity : ComponentActivity() {
 
     private val homeComponentViewModel: HomeComponentViewModel by viewModels()
     val requestServer = RequestServer(this)
-
     private val userName = mutableStateOf("")
-
     val isShowSubProducts = mutableStateOf(false)
     lateinit var groupId: String
     val isShowSearch = mutableStateOf(false)
 
     private lateinit var updateName2ActivityResult: ActivityResultLauncher<Intent>
-//
-
-
-
-
-
     val drawerState = mutableStateOf(DrawerState(initialValue = DrawerValue.Closed))
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        SharedInAppUpdate(this).checkUpdate()
-      homeComponentViewModel.productsStorage= ProductsStorage(this)
-        updateName2ActivityResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+       super.onCreate(savedInstanceState)
+       SharedInAppUpdate(this).checkUpdate()
+       homeComponentViewModel.productsStorage= ProductsStorage(this)
+       updateName2ActivityResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 val data: Intent? = result.data
                 val resultValue = data?.getStringExtra("user2")
@@ -188,352 +185,271 @@ class DashboardActivity : ComponentActivity() {
        homeComponentViewModel.checkIfNeedUpdate(requestServer, goToAddName = {goToAddName()})
         setContent {
             GreenlandRestaurantTheme {
-                ModalNavigationDrawer(
-                    drawerState = drawerState.value,
-                    drawerContent = {
-                        ModalDrawerSheet(
+                MainCompose1(
+                    padding = 0.dp,
+                    stateController = homeComponentViewModel.stateController,
+                    activity = this@DashboardActivity,
+                    read = {
+                        homeComponentViewModel.read(
+                            requestServer,
+                            goToAddName = { goToAddName() })
+                    }) {
+                    ModalNavigationDrawer(
+                        drawerState = drawerState.value,
+                        drawerContent = {
+                            NavigationDrawer()
+                        }
+                    ) {
+                        Column(
+                            Modifier.fillMaxSize()
                         ) {
-//                                                Text("Drawer title", modifier = Modifier.padding(16.dp) .fillMaxWidth(0.5F))
-//
-//                                                HorizontalDivider()
-//                                                NavigationDrawerItem(
-//                                                    label = { Text(text = "Drawer Item") },
-//                                                    selected = false,
-//                                                    onClick = { /*TODO*/ }
-//                                                )
-//                                                // ...other drawer items
+                            ImagesAndName()
+
+                            if (isShowSubProducts.value) {
+                                modalListV2()
+                            }
+                            if (isShowSearch.value) {
+                                SearchDialog(
+                                    onDismiss = { isShowSearch.value = false }
+                                )
+                            }
                         }
                     }
-                ) {
-                    MainCompose1(padding = 0.dp, stateController = homeComponentViewModel.stateController, activity = this@DashboardActivity, read = { homeComponentViewModel.read(requestServer, goToAddName = { goToAddName() }) }){
+                }
+            }
+        }
+    }
 
-                        ImagesAndName()
-//                                    ModalNavigationDrawer(
-//                                        drawerState = drawerState.value,
-//                                        drawerContent = {
-//                                            ModalDrawerSheet(
-//                                            ) {
-////                                                Text("Drawer title", modifier = Modifier.padding(16.dp) .fillMaxWidth(0.5F))
-////
-////                                                HorizontalDivider()
-////                                                NavigationDrawerItem(
-////                                                    label = { Text(text = "Drawer Item") },
-////                                                    selected = false,
-////                                                    onClick = { /*TODO*/ }
-////                                                )
-////                                                // ...other drawer items
-//                                            }
-//                                        }
-//                                    ) {
-//                                        Scaffold {
-//                                            Column(Modifier.fillMaxSize()) {
-//                                                ImagesAndName()
-//                                            }
-//
-//                                        }
-////
-//
-//                                        // Screen content
-//                                    }
-//                                    Scaffold(
-//                                        drawerContent = {}
-//                                    ) {
-//
-//                                    }
+    @Composable
+    private fun NavigationDrawer() {
+        ModalDrawerSheet(
+            modifier = Modifier.fillMaxWidth(0.6F)
+        ) {
+            LazyColumn {
+                item {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                    ) {
 
+                        AsyncImage(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .padding(10.dp),
+                            model = R.drawable.user,
+                            contentDescription = null
+                        )
+                        userName.value =
+                            if (homeComponentViewModel.homeComponent.user!!.name2 != null) homeComponentViewModel.homeComponent.user!!.name2.toString()
+                            else homeComponentViewModel.homeComponent.user!!.name
 
-//                                    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-//                                        rememberTopAppBarState())
-//                                    Scaffold (
-//                                        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-//                                    ){
-//                                        Column(
-//                                            modifier = Modifier
-//                                                .nestedScroll(scrollBehavior.nestedScrollConnection)
-//                                        ) {
-//                                            if (scrollBehavior.state.collapsedFraction != 1f)
-//                                                Log.e("ff",scrollBehavior.state.collapsedFraction.toString())
-//
-//                                        }
-//
-//
-//                                    }
-//                                    ImagesAndName()
-//                                    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-//                                        rememberTopAppBarState())
-//                                    Log.e("sdsd",scrollBehavior.state.collapsedFraction.toString())
-//                                    val (selectedTabIndex, setSelectedTabIndex, listState) = lazyListTabSync(cats.indices.toList())
-//                                    Scaffold(
-//                                        topBar = {
-////                                            // TopAppBar with scroll behavior
-////
-////
-//                                            LargeTopAppBar(
-//                                                title = {  Text(text = "mmdf") },
-//                                                scrollBehavior = scrollBehavior
-//                                            )
-//                                        },
-//                                        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-//
-//
-//
-//                                        ) {
-//                                        Column(
-//                                            Modifier.fillMaxSize()
-////                                          .padding(top = if (scrollBehavior.state.collapsedFraction != 1f) 0.dp else 50.dp)
-//
-//                                        ) {
-////                                            HeaderComponent(modifier = Modifier.height(
-////                                                if (scrollBehavior.state.collapsedFraction == 1f) 0.dp else 300.dp),)
-//
-//
-////
-//                                        }
+                        Text(
+    //                            maxLines = 1,
+    //                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(3.dp),
+                            text = "مرحبا بك: ${userName.value}"
+                        )
 
+                    }
+                    if (homeComponentViewModel.homeComponent.user!!.name2 == null)
+                        Text(
+                            "قم بتعيين الاسم الان", fontSize = 8.sp, maxLines = 1,
+                            modifier = Modifier
+                                .padding(start = 10.dp)
+                                .clickable {
+                                    goToAddName()
+                                },
+                            color = Color.Blue,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    HorizontalDivider()
+                    NavigationDrawerItem(
+                        icon = {
 
-
-//                                    }
-//                                    HeaderComponent()
-
-
-
-//                                    MyTabBar(categories = cats, selectedTabIndex =selectedTabIndex) { index, _ ->
-//                                        GlobalScope.launch {
-////                                            stateController.startAud()
-////                                            delay(500)
-////                                            stateController.successStateAUD()
-//                                        }
-//                                        setSelectedTabIndex(
-//                                            index
-//                                        )
-//                                    }
-
-//                                    MyLazyList( categories = cats,listState)
-//                                    TabSyncComposeScreen(dummyCategories)
-//                                    SmartTabsList(
-//                                        smartTabsContent = homeComponentViewModel.homeComponent.products,
-//                                        isTab = { itemFromContent -> true },
-//                                        smartTab = { headerItem, isSelected -> Text(text = headerItem.categoryId)
-////                                            Tab(
-////                                                content = { Text(text = headerItem.categoryId) },
-////                                                selected =  true,
-////                                                onClick = {
-////
-////                                                }
-////                                            )
-//
-//
-//                                                   },
-//                                        smartItem = { itemFromContent ->
-//
-//                                            Text(text = itemFromContent.name, modifier = Modifier.height(200.dp))
-//                                        }
-//                                    )
-//                                    val (selectedTabIndex, setSelectedTabIndex, syncedListState) = lazyListTabSync(homeComponentViewModel.homeComponent.products.indices.toList())
-//
-//                                    ScrollableTabRow(selectedTabIndex) {
-//                                        homeComponentViewModel.homeComponent.products.forEachIndexed { index, product ->
-//                                            Tab(
-//                                                selected = index == selectedTabIndex,
-//                                                onClick = {
-////                                                    selectedCategory.value = category
-//                                                    setSelectedTabIndex(index)
-//                                                          },
-//                                            ){
-//                                                homeComponentViewModel.homeComponent.categories.find { it.id == product.categoryId }
-//                                                    ?.let { Text(text = it.name) }
-//                                            }
-//                                        }
-//                                    }
-
-
-//                                    SynchronizedTabLazyColumnAndRow()
-//                                    Categories2()
-//                                    HorizontalDivider(thickness = 3.dp , modifier = Modifier.padding(1.dp))
-//                                    ImagesAndName(cats,listState)
-//                                    LazyColumn(content = {
-//                                        if (homeComponentViewModel.homeComponent.offers.isNotEmpty())
-//                                        OffersComponents()
-//                                        if (homeComponentViewModel.homeComponent.ads.isNotEmpty())
-//                                        AdsComponent()
-////                                        Categories()
-//                                    })
-
-                        if (isShowSubProducts.value) {
-//                                modalList(cart)
-                            modalListV2()
+                            AsyncImage(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(5.dp), model = R.drawable.orders, contentDescription = null
+                            )
+                        },
+                        label = { Text(text = "طلباتي السابقة",fontSize = 12.sp) },
+                        selected = false,
+                        onClick = {
+                            goToOrders(this@DashboardActivity)
                         }
-                        if (isShowSearch.value){
-                            SearchDialog(
-                                onDismiss = { isShowSearch.value = false }
+                    )
+                    HorizontalDivider()
+                    NavigationDrawerItem(
+                        icon = {
+                            AsyncImage(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(5.dp), model = R.drawable.shopping_cart_svgrepo_com, contentDescription = null
+                            )
+                        },
+                        label = { Text(text = "سلتي",fontSize = 12.sp) },
+                        selected = false,
+                        onClick = {
+                            goToCart(this@DashboardActivity)
+                        }
+                    )
+
+                    HorizontalDivider()
+                    NavigationDrawerItem(
+                        icon = {
+                            Icon(
+                                modifier = Modifier.padding(5.dp),
+                                imageVector = Icons.Outlined.Place,
+                                contentDescription = "",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        },
+                        label = { Text(text = "اماكني",fontSize = 12.sp) },
+                        selected = false,
+                        onClick = {
+                            goToLocations(this@DashboardActivity)
+                        }
+                    )
+                    HorizontalDivider()
+                    NavigationDrawerItem(
+                        icon = {
+                            Icon(
+                                modifier = Modifier.padding(5.dp),
+                                imageVector = Icons.Outlined.FavoriteBorder,
+                                contentDescription = "",
+                                tint = Color.Red
+                            )
+                        },
+                        label = { Text(text = "المفضلة",fontSize = 12.sp) },
+                        selected = false,
+                        onClick = { /*TODO*/ }
+                    )
+                    HorizontalDivider()
+                    NavigationDrawerItem(
+                        icon = {
+                            Icon(
+                                modifier = Modifier.padding(5.dp),
+                                imageVector = Icons.Outlined.AccountCircle,
+                                contentDescription = "",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        },
+                        label = { Text(text = "سياسة الخصوصية وشروط الاستخدام" , fontSize = 12.sp) },
+                        selected = false,
+                        onClick = {
+                            intentFunUrl("https://greenland-rest.com/policies-terms.html")
+                        }
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    HorizontalDivider()
+                    Text("الاتصال بنا ")
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        IconButton(
+                            onClick = {
+intentFunUrl("tel:780222271")
+                            }
+                        ) {
+                            Icon(
+                                modifier = Modifier.padding(5.dp),
+                                imageVector = Icons.Outlined.Phone,
+                                contentDescription = "",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+intentFunUrl("https://api.whatsapp.com/send?phone=967780222271")
+                            }
+                        ) {
+                            AsyncImage(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(5.dp),
+                                model = R.drawable.whatsapp_icon,
+                                contentDescription = null
                             )
                         }
 
                     }
-
-//                    Scaffold {
-//                        Column(Modifier.fillMaxSize()) {
-//
-//                        }
-//
-//                    }
-//
-
-                    // Screen content
-                }
+                    Spacer(Modifier.height(40.dp))
 
 
-                        }
-        }
-    }
 
-    @Composable
-    private fun Categories2() {
-        Row(
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            IconButton(onClick = {
-
-            }) {
-                Icon(
-
-                    painter = painterResource(
-                        R.drawable.baseline_read_more_24
-                    ),
-                    contentDescription = ""
-                )
-            }
-            LazyRow(
-                modifier = Modifier
-                    .height(60.dp)
-                    .padding(6.dp),
-                content = {
-                    items(homeComponentViewModel.homeComponent.categories) {
-//                        Tab(selected = selectedCategory.value.id == it.id, onClick = {selectedCategory.value = it }) {
-//                            Text(modifier = Modifier.padding(5.dp), text = it.name)
-//                        }
-//                        Card(
-//                            Modifier
-//                                .padding(5.dp)
-//                                .clickable {
-//                                    selectedCategory.value = it
-//                                }
-//                        ) {
-//                            Text(modifier = Modifier.padding(5.dp), text = it.name)
-//                        }
-
-                    }
-                })
-        }
-    }
-
-
-    private fun LazyListScope.Categories() {
-        item {
-            Text(text = "الاصناف")
-        }
-        items(homeComponentViewModel.homeComponent.categories.chunked(2)) { rowItems ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly // توزيع العناصر بالتساوي
-            ) {
-                rowItems.forEach { s ->
-                    Card(
-                        Modifier
-                            .weight(1f)
-                            .height(200.dp)
-                            .width(200.dp)
-                            .padding(5.dp)
-
+                    HorizontalDivider()
+                    Text("مواقع التواصل الاجتماعي")
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .background(Color.White)
-                                .border(
-                                    1.dp,
-                                    Color.Black,
-                                    RoundedCornerShape(
-                                        16.dp
-                                    )
-                                )
-                                .clip(
-                                    RoundedCornerShape(
-                                        16.dp
-                                    )
-                                )
-                                .clickable {
-                                    val intent = Intent(
-                                        this@DashboardActivity,
-                                        ProductsActivity::class.java
-                                    )
-                                    intent.putExtra("category_id", s.id)
-                                    startActivity(intent)
-                                }
+                        IconButton(
+                            onClick = {
+
+                                intentFunUrl("https://www.facebook.com/greenland.rests")
+                            }
                         ) {
-                            Box(
+                            AsyncImage(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(170.dp)
-                                    .align(Alignment.TopCenter)
-                            ) {
-                                CustomImageView(
-                                    context = this@DashboardActivity,
-                                    imageUrl = s.category_image_path + s.image,
-                                    okHttpClient = requestServer.createOkHttpClientWithCustomCert()
-                                )
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(30.dp)
-                                    .align(Alignment.BottomCenter)
-                                    .background(MaterialTheme.colorScheme.primary),
-                            ) {
-
-                                Text(
-                                    modifier = Modifier
-                                        .align(Alignment.Center),
-                                    text = s.name,
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    overflow = TextOverflow.Ellipsis,
-                                    maxLines = 1
-                                )
-
-                            }
+                                    .size(40.dp)
+                                    .padding(5.dp),
+                                model = R.drawable.facebook_,
+                                contentDescription = null
+                            )
                         }
+                        IconButton(
+                            onClick = {
+                                intentFunUrl("https://www.instagram.com/greenland.rest")
+                            }
+                        ) {
+                            AsyncImage(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(5.dp),
+                                model = R.drawable.instagram_,
+                                contentDescription = null
+                            )
+                        }
+                        IconButton(
+                            onClick = {
 
+                                intentFunUrl("https://t.me/+rbaWvWzfG7phYjM0")
+                            }
+                        ) {
+                            AsyncImage(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(5.dp),
+                                model = R.drawable.telegram_,
+                                contentDescription = null
+                            )
 
+                        }
                     }
-                }
 
+                }
             }
         }
     }
+    private fun intentFunUrl(uri:String) {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse(uri)
+        }
+        try {
+            startActivity(intent)
+        } catch (_: Exception) {
 
+        }
+    }
 
     @Composable
     private fun HeaderComponent(modifier :Modifier = Modifier) {
-        var count = 3
-        if (homeComponentViewModel.homeComponent.ads.isNotEmpty()) count++
-        if (homeComponentViewModel.homeComponent.offers.isNotEmpty()) count++
-        if (homeComponentViewModel.homeComponent.discounts.isNotEmpty()) count++
 
         if (homeComponentViewModel.homeComponent.user != null)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-//                    .animatedBorder(
-//                        borderColors = listOf(Color.Red, Color.Green, Color.Blue),
-//                        backgroundColor = Color.White,
-//                        shape = RoundedCornerShape(0.dp, 0.dp, 15.dp, 15.dp),
-//                        borderWidth = 4.dp,
-//                        animationDurationInMillis = 5000
-//                    ),
             ) {
                 Row(
 
@@ -587,21 +503,6 @@ class DashboardActivity : ComponentActivity() {
                         )
 
                         }
-//                        AsyncImage(
-//                            modifier = Modifier
-//                                .size(50.dp)
-//                                .padding(10.dp), model = R.drawable.user, contentDescription = null
-//                        )
-                        userName.value =
-                            if (homeComponentViewModel.homeComponent.user!!.name2 != null) homeComponentViewModel.homeComponent.user!!.name2.toString()
-                            else homeComponentViewModel.homeComponent.user!!.name
-
-//                        Text(
-//                            maxLines = 1,
-//                            overflow = TextOverflow.Ellipsis,
-//                            modifier = Modifier.padding(3.dp),
-//                            text = "مرحبا بك: ${userName.value}"
-//                        )
                     }
                     Row (
                         Modifier.border(
@@ -628,9 +529,7 @@ class DashboardActivity : ComponentActivity() {
                             text = (cartController3.products.value.size + cartController3.offers.value.size).toString()
                         )
                         IconButton(modifier =  Modifier.size(50.dp),onClick = {
-
-                            isShowSearch.value = true
-//                        isShowSea
+                            goToCart(this@DashboardActivity)
                         }){
                             Icon(
                                 modifier =  Modifier.padding(5.dp),
@@ -643,9 +542,7 @@ class DashboardActivity : ComponentActivity() {
 
 
                         IconButton(modifier =  Modifier.size(50.dp),onClick = {
-
                             isShowSearch.value = true
-//                        isShowSea
                         }){
                             Icon(
                                 modifier =  Modifier.padding(5.dp),
@@ -654,83 +551,9 @@ class DashboardActivity : ComponentActivity() {
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
-
-
                     }
-
-
                 }
-                if (homeComponentViewModel.homeComponent.user!!.name2 == null)
-                    Text(
-                        "قم بتعيين الاسم الان", fontSize = 8.sp, maxLines = 1,
-                        modifier = Modifier
-                            .padding(start = 10.dp)
-                            .clickable {
-                                goToAddName()
-                            },
-                        color = Color.Blue,
-                        overflow = TextOverflow.Ellipsis,
-                    )
                 HorizontalDivider()
-//                LazyVerticalGrid(
-//                    columns = GridCells.Fixed(count), content = {
-//                        item {
-//                            CartButton(this@DashboardActivity)
-//                        }
-//                        item {
-//                            Column(
-//                                Modifier
-//                                    .padding(3.dp)
-//                                    .width(20.dp)
-//                                    .clickable {
-//                                        val intent = Intent(
-//                                            this@DashboardActivity,
-//                                            OrdersActivity::class.java
-//                                        )
-//                                        startActivity(intent)
-//
-//                                    },
-//                                horizontalAlignment = Alignment.CenterHorizontally,
-//                                verticalArrangement = Arrangement.Center
-//                            ) {
-//                                AsyncImage(
-//                                    modifier = Modifier
-//                                        .size(50.dp)
-//                                        .padding(10.dp),
-//                                    model = R.drawable.orders,
-//                                    contentDescription = null
-//                                )
-//                                Text(text = "الطلبات", fontSize = 10.sp)
-//                            }
-//                        }
-//                        item {
-//                            Column(
-//                                Modifier
-//                                    .padding(3.dp)
-//                                    .width(20.dp)
-//                                    .clickable {
-//                                        isShowSearch.value = true
-//                                    },
-//                                horizontalAlignment = Alignment.CenterHorizontally,
-//                                verticalArrangement = Arrangement.Center
-//                            ) {
-//                                Icon(
-//                                    modifier =  Modifier.padding(10.dp) ,
-//                                    imageVector = Icons.Outlined.Search,
-//                                    contentDescription = "",
-//                                    tint = MaterialTheme.colorScheme.primary
-//                                )
-////                                AsyncImage(
-////                                    modifier = Modifier
-////                                        .size(50.dp)
-////                                        .padding(10.dp),
-////                                    model = R.drawable.search,
-////                                    contentDescription = null
-////                                )
-//                                Text(text = "بحث", fontSize = 10.sp)
-//                            }
-//                        }
-//                    })
             }
     }
 
@@ -746,7 +569,6 @@ class DashboardActivity : ComponentActivity() {
     @Composable
     private fun OffersContent() {
         Text(text = "عروض مميزة")
-        HorizontalDivider()
         LazyHorizontalGrid(
             horizontalArrangement = Arrangement.spacedBy(5.dp),
             modifier = Modifier
@@ -806,46 +628,15 @@ class DashboardActivity : ComponentActivity() {
                                     .fillMaxSize()
                                     .clickable {
                                         goToAddOfferToCart(item)
-//                                        val intent = Intent(
-//                                            this@DashboardActivity,
-//                                            OfferProductsActivity::class.java
-//                                        )
-//                                        intent.putExtra("offer", MyJson.MyJson.encodeToString(item))
-//                                        startActivity(intent)
                                     }) {
                                 CustomImageView(
                                     context = this@DashboardActivity,
                                     imageUrl = item.image,
                                     okHttpClient = requestServer.createOkHttpClientWithCustomCert()
                                 )
-    //                                SubcomposeAsyncImage(
-    //                                    loading = {
-    //                                        LoadingCompose()
-    //                                    },
-    //                                    contentScale = ContentScale.Fit,
-    //                                    modifier = Modifier
-    //                                        .fillMaxSize(),
-    //                                    model = item.image,
-    //                                    contentDescription = "null",
-    //                                )
-    //                                Box (
-    //                                    Modifier
-    //                                        .align(
-    //                                            Alignment.BottomStart
-    //                                        )
-    //                                        .padding(5.dp)
-    //                                        .background(MaterialTheme.colorScheme.primary),
-    //                                ){
-    //
-    //
-    //
-    //                                }
-
                             }
                         }
                     }
-
-
                 }
             })
         HorizontalDivider(thickness = 5.dp)
@@ -1173,7 +964,6 @@ class DashboardActivity : ComponentActivity() {
     }
 
     @Composable
-    @OptIn(ExperimentalFoundationApi::class)
     private fun ImagesAndName2(newList2: List<ProductModel>) {
         LazyColumn(
             modifier = Modifier
@@ -1185,7 +975,6 @@ class DashboardActivity : ComponentActivity() {
                     }
             })
     }
-
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -1304,8 +1093,6 @@ class DashboardActivity : ComponentActivity() {
             }
         }
     }
-
-
 }
 
 @Composable
@@ -1349,11 +1136,7 @@ fun CartButton(appComponentActivity: ComponentActivity) {
         Modifier
             .padding(3.dp)
             .clickable {
-                val intent = Intent(
-                    appComponentActivity,
-                    CartActivity::class.java
-                )
-                appComponentActivity.startActivity(intent)
+                goToCart(appComponentActivity)
 
             },
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -1396,5 +1179,27 @@ fun CartButton(appComponentActivity: ComponentActivity) {
             }
         }
     }
+}
+
+private fun goToCart(appComponentActivity: ComponentActivity) {
+    val intent = Intent(
+        appComponentActivity,
+        CartActivity::class.java
+    )
+    appComponentActivity.startActivity(intent)
+}
+private fun goToLocations(appComponentActivity: ComponentActivity) {
+    val intent = Intent(
+        appComponentActivity,
+        UserLocationsActivity::class.java
+    )
+    appComponentActivity.startActivity(intent)
+}
+private fun goToOrders(appComponentActivity: ComponentActivity) {
+    val intent = Intent(
+        appComponentActivity,
+        OrdersActivity::class.java
+    )
+    appComponentActivity.startActivity(intent)
 }
 
