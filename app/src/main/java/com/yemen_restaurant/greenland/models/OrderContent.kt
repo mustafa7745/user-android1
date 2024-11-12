@@ -10,6 +10,16 @@ data class OrderContentModel (
     val discount: OrderContentDiscountModel?,
 )
 @Serializable
+data class OrderContentWithDeliveryModel (
+    val order: OrderModel,
+    val orderContent:  OrderContentModel,
+    var orderStatus:List<OrderStatus>,
+    val deliveryMan: DeliveryMan?,
+)
+@Serializable
+data class DeliveryMan(val name:String,val phone:String)
+
+@Serializable
 data class OrderContentProductsModel (
     val id: String,
     val productId: String,

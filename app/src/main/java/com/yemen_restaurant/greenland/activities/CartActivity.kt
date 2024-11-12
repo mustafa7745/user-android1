@@ -24,11 +24,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,6 +42,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -468,7 +472,12 @@ private val locationData = mutableStateOf<UserLocationModel?>(null)
 //                    }
                 }
             item{
-                CardView("طريقة الدفع"){
+                CardView({
+                    OutLinedButton(
+                        text = "تغيير"
+                    ) { }
+
+                },"طريقة الدفع"){
                     Row (
                         Modifier
                             .fillMaxWidth()
@@ -610,8 +619,10 @@ private val locationData = mutableStateOf<UserLocationModel?>(null)
         )
     }
 
+
+
     @Composable
-    private fun CardView(title:String, content: @Composable() (ColumnScope.() -> Unit)) {
+    private fun CardView(button : @Composable()()->Unit = {},title:String, content: @Composable() (ColumnScope.() -> Unit)) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -634,6 +645,8 @@ private val locationData = mutableStateOf<UserLocationModel?>(null)
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
+                    button
+
                 }
 
                 HorizontalDivider(Modifier.padding(10.dp))
@@ -691,7 +704,7 @@ private val locationData = mutableStateOf<UserLocationModel?>(null)
         }) {
             stateController.successState()
             val intent = Intent(
-                this@CartActivity, OrdersProductsActivity::class.java
+                this@CartActivity, OrderStatusActivity::class.java
             )
             intent.putExtra("orderContent", it)
             startActivity(intent)
@@ -799,4 +812,8 @@ private val locationData = mutableStateOf<UserLocationModel?>(null)
 
 fun getCurrentDate(): LocalDateTime {
     return LocalDateTime.now()
+}
+
+fun roundToNearestFifty(value: Int): Int {
+    return ((value + 25) / 50) * 50
 }

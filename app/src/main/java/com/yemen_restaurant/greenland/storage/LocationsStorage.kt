@@ -5,34 +5,35 @@ import com.yemen_restaurant.greenland.activities.getCurrentDate
 import com.yemen_restaurant.greenland.models.HomeComponent
 import com.yemen_restaurant.greenland.models.OrderModel
 import com.yemen_restaurant.greenland.models.OrderStatus
+import com.yemen_restaurant.greenland.models.UserLocationModel
 import com.yemen_restaurant.greenland.shared.MyJson
 import java.time.LocalDateTime
 
-class OrderStorage {
-    private val getStorage = GetStorage("orders")
-    private val statustKey = "orders1"
-    private val statusDateKey = "orders1Key"
+class LocationsStorage {
+    private val getStorage = GetStorage("locations")
+    private val statustKey = "location"
+    private val statusDateKey = "locationKey"
 
 
-fun isSetOrders():Boolean{
+fun isSetLocations():Boolean{
 //       return getStorage.getData(homeComponentKey).isNotEmpty()
     return try {
-        getOrders()
+        getLocations()
         true
     }catch (e:Exception){
-        setOrders("")
+        setLocations("")
         false
     }
 }
-    fun setOrders(data:String){
+    fun setLocations(data:String){
         getStorage.setData(statusDateKey, getCurrentDate().toString())
         getStorage.setData(statustKey,data)
     }
 
-    fun getOrdersDate(): LocalDateTime? {
+    fun getLocationsDate(): LocalDateTime? {
         return (LocalDateTime.parse(getStorage.getData(statusDateKey)))
     }
-    fun getOrders():List<OrderModel>{
+    fun getLocations():List<UserLocationModel>{
         return MyJson.IgnoreUnknownKeys.decodeFromString(getStorage.getData(statustKey))
     }
 }

@@ -8,6 +8,8 @@ data class OrderModel (
     val userId: String,
     var code:String?,
     val situationId: String,
+    val paid:String?,
+    val inrest:String?,
     val createdAt: String,
     val updatedAt: String,
 )

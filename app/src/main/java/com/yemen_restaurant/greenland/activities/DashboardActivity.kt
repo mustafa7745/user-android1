@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -37,6 +38,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
@@ -59,6 +61,7 @@ import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.DrawerState
@@ -75,6 +78,7 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -105,6 +109,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -135,6 +140,7 @@ import com.yemen_restaurant.greenland.synclist.convertToCategoryStructure
 import com.yemen_restaurant.greenland.synclist.lazyListTabSync
 import com.yemen_restaurant.greenland.ui.theme.GreenlandRestaurantTheme
 import com.yemen_restaurant.greenland.viewModels.HomeComponentViewModel
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
@@ -142,14 +148,17 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.MultipartBody
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.time.Duration
 import java.time.LocalDateTime
+import java.util.Locale
+import kotlin.system.exitProcess
 
 val cartController3 = CartController3()
 
 
 class DashboardActivity : ComponentActivity() {
-
     private val homeComponentViewModel: HomeComponentViewModel by viewModels()
     val requestServer = RequestServer(this)
     private val userName = mutableStateOf("")
@@ -182,9 +191,16 @@ class DashboardActivity : ComponentActivity() {
 
             }
         }
-       homeComponentViewModel.checkIfNeedUpdate(requestServer, goToAddName = {goToAddName()})
+//       if (!homeComponentViewModel.stateController.isLoadingRead.value)
+        homeComponentViewModel.stateController.startRead()
+        lifecycleScope.launch {
+            delay(1)
+            homeComponentViewModel.checkIfNeedUpdate(requestServer, goToAddName = {goToAddName()})
+        }
+
         setContent {
             GreenlandRestaurantTheme {
+                ExitConfirmation()
                 MainCompose1(
                     padding = 0.dp,
                     stateController = homeComponentViewModel.stateController,
@@ -310,20 +326,20 @@ class DashboardActivity : ComponentActivity() {
                             goToLocations(this@DashboardActivity)
                         }
                     )
-                    HorizontalDivider()
-                    NavigationDrawerItem(
-                        icon = {
-                            Icon(
-                                modifier = Modifier.padding(5.dp),
-                                imageVector = Icons.Outlined.FavoriteBorder,
-                                contentDescription = "",
-                                tint = Color.Red
-                            )
-                        },
-                        label = { Text(text = "المفضلة",fontSize = 12.sp) },
-                        selected = false,
-                        onClick = { /*TODO*/ }
-                    )
+//                    HorizontalDivider()
+//                    NavigationDrawerItem(
+//                        icon = {
+//                            Icon(
+//                                modifier = Modifier.padding(5.dp),
+//                                imageVector = Icons.Outlined.FavoriteBorder,
+//                                contentDescription = "",
+//                                tint = Color.Red
+//                            )
+//                        },
+//                        label = { Text(text = "المفضلة",fontSize = 12.sp) },
+//                        selected = false,
+//                        onClick = { /*TODO*/ }
+//                    )
                     HorizontalDivider()
                     NavigationDrawerItem(
                         icon = {
@@ -499,7 +515,11 @@ intentFunUrl("https://api.whatsapp.com/send?phone=967780222271")
                            AsyncImage(
                             modifier = Modifier
                                 .size(40.dp)
-                                .padding(5.dp), model = R.drawable.logo, contentDescription = null
+                                .padding(5.dp).clickable{
+                                    scope.launch {
+                                        drawerState.value.open()
+                                    }
+                                }, model = R.drawable.logo, contentDescription = null
                         )
 
                         }
@@ -562,6 +582,65 @@ intentFunUrl("https://api.whatsapp.com/send?phone=967780222271")
     private fun goToAddName() {
         val intent = Intent(this@DashboardActivity, AddNameActivity::class.java)
         updateName2ActivityResult.launch(intent)
+    }
+
+    @Composable
+    fun ExitConfirmation() {
+        var showExitDialog by remember { mutableStateOf(false) }
+
+        // التقاط زر الرجوع
+        BackHandler {
+            showExitDialog = true
+        }
+
+        if (showExitDialog) {
+            ExitConfirmationDialog(
+                onConfirm = {
+                    // تأكيد الخروج
+                    exitProcess(0) // إغلاق التطبيق (يمكنك استبداله بإجراء آخر)
+                },
+                onDismiss = {
+                    // إغلاق نافذة التأكيد والعودة للتطبيق
+                    showExitDialog = false
+                }
+            )
+        }
+
+//        // واجهة المستخدم الرئيسية
+//        Column(
+//            modifier = Modifier
+//                .fillMaxSize()
+//                .wrapContentSize(Alignment.Center)
+//        ) {
+//            Text(text = "اضغط زر الرجوع للخروج أو اضغط فوق النافذة لإلغاء التأكيد.")
+//        }
+    }
+
+    @Composable
+    fun ExitConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(text = "هل أنت متأكد؟")
+            },
+            text = {
+                Text("هل تريد الخروج من التطبيق؟")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = onConfirm
+                ) {
+                    Text("نعم")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = onDismiss
+                ) {
+                    Text("لا")
+                }
+            }
+        )
     }
 
 
@@ -727,27 +806,28 @@ intentFunUrl("https://api.whatsapp.com/send?phone=967780222271")
                     AdsContent()
             }
 
-        Row(
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ){
-            IconButton(onClick = {
-
-            }) {
-                Icon(
-
-                    painter = painterResource(
-                        R.drawable.baseline_read_more_24
-                    ),
-                    contentDescription = ""
-                )
-            }
-            MyTabBar(categories = homeComponentViewModel.cats, selectedTabIndex =selectedTabIndex,requestServer) { index, _ ->
-                setSelectedTabIndex(
-                    index
-                )
-            }
+//        Row(
+//            horizontalArrangement = Arrangement.End,
+//            verticalAlignment = Alignment.CenterVertically,
+//            modifier = Modifier.fillMaxWidth()
+//        ){
+//            IconButton(onClick = {
+//
+//            }) {
+//                Icon(
+//
+//                    painter = painterResource(
+//                        R.drawable.baseline_read_more_24
+//                    ),
+//                    contentDescription = ""
+//                )
+//            }
+//
+//        }
+        MyTabBar(categories = homeComponentViewModel.cats, selectedTabIndex =selectedTabIndex,requestServer) { index, _ ->
+            setSelectedTabIndex(
+                index
+            )
         }
 
 
@@ -833,7 +913,7 @@ intentFunUrl("https://api.whatsapp.com/send?phone=967780222271")
             Card(
                 Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
+                    .height(155.dp)
                     .padding(5.dp)
                     .clickable {
                         if (product.products_groupsName != "الرئيسية") {
@@ -1193,6 +1273,8 @@ private fun goToLocations(appComponentActivity: ComponentActivity) {
         appComponentActivity,
         UserLocationsActivity::class.java
     )
+    intent.putExtra("1", "1")
+    Log.e("dede","sdds")
     appComponentActivity.startActivity(intent)
 }
 private fun goToOrders(appComponentActivity: ComponentActivity) {
@@ -1201,5 +1283,15 @@ private fun goToOrders(appComponentActivity: ComponentActivity) {
         OrdersActivity::class.java
     )
     appComponentActivity.startActivity(intent)
+}
+
+//fun roundToNearestFifty(value: Int): Int {
+//    return ((value + 25) / 50) * 50
+//}
+fun formatPrice(price: String): String {
+    val doublePrice = price.toDouble()
+    val symbols = DecimalFormatSymbols(Locale.ENGLISH)
+    val decimalFormat = DecimalFormat("#.##", symbols) // Format to two decimal places
+    return decimalFormat.format(doublePrice)
 }
 

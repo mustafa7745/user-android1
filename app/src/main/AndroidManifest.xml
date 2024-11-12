@@ -57,24 +57,9 @@
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".activities.SearchActivity"
-            android:exported="false"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".activities.OfferProductsActivity"
-            android:exported="false"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait" />
-        <activity
             android:name=".activities.UserLocationsActivity"
             android:exported="false"
             android:label="@string/app_name" />
-        <activity
-            android:name=".activities.ProductsActivity"
-            android:exported="false"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait" />
         <activity
             android:name=".activities.OrderStatusActivity"
             android:exported="false"
@@ -104,11 +89,6 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".activities.OrdersActivity"
-            android:exported="false"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".activities.OrdersProductsActivity"
             android:exported="false"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />

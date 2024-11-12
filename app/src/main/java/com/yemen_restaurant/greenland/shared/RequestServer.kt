@@ -174,6 +174,7 @@ class RequestServer(private val activity: ComponentActivity) {
             put("deviceId",deviceInfoMethod.getDeviceId())
             put("deviceInfo", deviceInfoMethod.getDeviceInfo().toString())
             put("appDeviceToken",AppInfoMethod.getAppToken())
+            Log.e("tooo",deviceInfoMethod.getDeviceId().toString())
         }
     }
 
@@ -181,6 +182,7 @@ class RequestServer(private val activity: ComponentActivity) {
         val text = buildJsonObject {
             put("inputLoginToken", login.getLoginTokenWithDate().token)
         }
+        Log.e("tooo",text.toString())
         return text.toString()
     }
 }

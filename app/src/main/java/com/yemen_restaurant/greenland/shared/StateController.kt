@@ -27,10 +27,7 @@ class StateController {
          isSuccessRead.value = true
        isErrorRead.value = false
     }
-    fun isSuccessState():Boolean {
-      return  isSuccessRead.value
-    }
-    //
+
      fun startAud() {
         errorAUD.value = ""
        isLoadingAUD.value = true

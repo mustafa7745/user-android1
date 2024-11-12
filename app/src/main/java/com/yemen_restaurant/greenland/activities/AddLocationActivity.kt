@@ -16,6 +16,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,18 +31,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -97,7 +103,7 @@ class AddLocationActivity : ComponentActivity() {
     val stateController = StateController()
     private val requestServer = RequestServer(this)
     val openDialog =  mutableStateOf(false)
-     var locationTypes = mutableStateOf<List<LocationTypeModel>>(listOf())
+    var locationTypes = mutableStateOf<List<LocationTypeModel>>(listOf())
     val selectedLocationType =   mutableStateOf<LocationTypeModel?>(null)
 
     val permissions = arrayOf(
@@ -173,6 +179,7 @@ private fun add() {
                     MyJson.IgnoreUnknownKeys.decodeFromString(
                         it
                     )
+//            expanded.value = true
                 openDialog.value = true
 
         }
@@ -345,13 +352,9 @@ private fun add() {
                     )
 
 
-
-
-
                     OutlinedTextField(
                         value = "صنعاء",
                         onValueChange = {},
-                        label = { Text("المدينة") },
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -364,6 +367,8 @@ private fun add() {
                             modifier = Modifier.padding(start = 4.dp)
                         )
                     }
+
+//                    chooseType()
                     Button(
                         onClick = {
                             if (locationTypes.value.isEmpty())
@@ -372,25 +377,52 @@ private fun add() {
                                 openDialog.value=true
 
                         },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White, // Background color
+                        ),
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(8.dp)
+                            .fillMaxWidth().border(
+                            1.dp,
+                    MaterialTheme.colorScheme.primary,
+                    RoundedCornerShape(
+                        16.dp
+                    )
+                    )
+                    .clip(
+                    RoundedCornerShape(
+                        16.dp
+                    )
+                ),
                     ) {
-                        Text(
-                            text = selectedLocationType.value?.name ?: "نوع العنوان",
-                            color = Color.White, fontSize = 18.sp,fontFamily = FontFamily(
-                                Font(R.font.bukra_bold)))
+                        Row(Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ){
+                            Text(
+                                text = selectedLocationType.value?.name ?: "اختر نوع العنوان",
+                                color = MaterialTheme.colorScheme.primary, fontSize = 18.sp,fontFamily = FontFamily(
+                                    Font(R.font.bukra_bold)),
+
+                                )
+                            Icon(
+                                imageVector = Icons.Filled.ArrowDropDown,
+                                contentDescription = "Dropdown Arrow",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+
+                        }
+
                     }
 
                     var isValidNearTo by remember { mutableStateOf(true) }
                     if (!isValidNearTo) {
+
                         Text(
                             text = "يحب الايزيد طول الحقل اكثر من 100 حرف",
                             color = Color.Red,
                             fontSize = fontSize,
-                            modifier = Modifier.padding(start = 4.dp)
-                        )
+                            modifier = Modifier.padding(start = 4.dp))
+
+
                     }
 
                     OutlinedTextField(
@@ -398,10 +430,9 @@ private fun add() {
                         onValueChange = { nearto.value = it
                             isValidNearTo = nearto.value.length < 100
                         },
-                        label = { Text(if (selectedLocationType.value  != null && selectedLocationType.value!!.name.contains("سيارة")) "رقم السيارة ونوعها ولونها" else "بالقرب من / مركز معروف / محل / منزل") },
+                        label = { Text(if (selectedLocationType.value  != null && selectedLocationType.value!!.name.contains("سيارة")) "رقم السيارة ونوعها ولونها" else "بالقرب من / مركز معروف / محل / منزل", fontSize = 10.sp) },
                         modifier = Modifier.fillMaxWidth(),
                         maxLines = 5,
-
                         singleLine = false,
                         isError = !isValidNearTo,
                     )
@@ -411,7 +442,7 @@ private fun add() {
                         onValueChange = { s->street.value = s
                             isValidStreet = street.value.length < 20
                         },
-                        label = { Text("الشارع") },
+                        label = { Text("الشارع", fontSize = 10.sp) },
                         modifier = Modifier.fillMaxWidth(),
                         isError = !isValidStreet,
                     )
@@ -444,7 +475,7 @@ private fun add() {
 
 
                     Button(
-                        enabled = isValidPhone && contact.value.isNotEmpty() && nearto.value.isNotEmpty() && street.value.isNotEmpty() && isValidNearTo && isValidStreet,
+                        enabled = isValidPhone && contact.value.isNotEmpty() && nearto.value.isNotEmpty() && street.value.isNotEmpty() && isValidNearTo && isValidStreet && selectedLocationType.value != null,
                         onClick = { add() },
                         modifier = Modifier
                             .fillMaxWidth()

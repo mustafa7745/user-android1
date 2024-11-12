@@ -79,6 +79,7 @@ dependencies {
 //    implementation ("io.github.ahmad-hamwi:tabsync-compose:1.0.1")
 //    implementation("com.quadible:smart-tabs:1.0.0")
     implementation("com.google.maps.android:maps-compose:6.2.0")
+    implementation ("com.google.accompanist:accompanist-swiperefresh:0.28.0")
 //    // Optionally, you can include the Compose utils library for Clustering,
 //    // Street View metadata checks, etc.
 //    implementation ("com.google.maps.android:maps-compose-utils:6.2.1")

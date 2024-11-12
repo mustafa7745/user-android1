@@ -84,6 +84,7 @@ class HomeComponentViewModel: ViewModel() {
     }
     fun initCategories() {
         cats = convertToCategoryStructure(homeComponent.categories, getInMainProducts())
+        Log.e("2.55",cats.toString())
         stateController.successState()
     }
     private fun getInMainProducts(): ArrayList<ProductModel> {
@@ -110,8 +111,11 @@ class HomeComponentViewModel: ViewModel() {
             if (diff <= 5) {
                 Log.e("procssed", diff.toString())
                 homeComponent = homeComponentStorage.getHomeComponent()
+                Log.e("1111","1111")
                 homeComponent.products = productsStorage.getProducts();
+                Log.e("2222","2222")
                 initCategories()
+                Log.e("3333","3333")
                 return true
             }
         }

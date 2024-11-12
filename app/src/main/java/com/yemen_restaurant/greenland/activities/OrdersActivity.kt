@@ -3,27 +3,34 @@ package com.yemen_restaurant.greenland.activities
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.yemen_restaurant.greenland.R
 import com.yemen_restaurant.greenland.models.OrderModel
 import com.yemen_restaurant.greenland.shared.MyJson
@@ -38,15 +46,20 @@ import com.yemen_restaurant.greenland.shared.RequestServer
 import com.yemen_restaurant.greenland.shared.SharedOrderStatus
 import com.yemen_restaurant.greenland.shared.StateController
 import com.yemen_restaurant.greenland.shared.Urls
+import com.yemen_restaurant.greenland.storage.OrderStorage
 import com.yemen_restaurant.greenland.ui.theme.GreenlandRestaurantTheme
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.MultipartBody
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class OrdersActivity : ComponentActivity() {
     private val stateController = StateController()
     private val orders = mutableStateOf<List<OrderModel>>(listOf())
     val requestServer = RequestServer(this)
+    val ordersStorage = OrderStorage()
     private fun readOrders() {
         stateController.isLoadingRead.value = true
         val data3 = buildJsonObject {
@@ -65,25 +78,27 @@ class OrdersActivity : ComponentActivity() {
         requestServer.request2(body1, Urls.ordersUrl, { _, it ->
             stateController.errorStateRead(it)
         }) {
-                orders.value =
+             orders.value =
                     MyJson.IgnoreUnknownKeys.decodeFromString(
                         it
                     )
-                stateController.successState()
+            ordersStorage.setOrders(it)
+             stateController.successState()
         }
     }
+    @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        readOrders()
+        checkIfNeedUpdate()
         setContent {
             GreenlandRestaurantTheme {
                 val topBarHeight = 70.dp
-                // A surface container using the 'background' color from the theme
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
-                        cCompose.topBar(topBarHeight = topBarHeight, this)
+                        cCompose.topBar(topBarHeight = topBarHeight, this,"طلباتي السابقة")
                     },
                     content = {
                         MainCompose1(
@@ -108,49 +123,46 @@ class OrdersActivity : ComponentActivity() {
                                     columns = GridCells.Fixed(1),
                                     content = {
                                         itemsIndexed(orders.value) { _, s ->
+                                            
                                             Column(
                                                 Modifier.fillMaxWidth()
                                             ) {
                                                 Card(Modifier.padding(10.dp)) {
                                                     Row {
-                                                        Text(text = "رقم الطلب")
+                                                        Text(text = "رقم الطلب: ")
                                                         Text(text = s.id)
                                                     }
                                                     Row {
+                                                        val formattedDateTime =
+                                                s.createdAt.replace("\\s".toRegex(), "T")
+                                            val date = (LocalDateTime.parse(formattedDateTime))
+
                                                         Text(text = "تاريخ الطلب")
-                                                        Text(text = s.createdAt)
+                                                        Text(text = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                                                    .toString()+ " " + date.format(DateTimeFormatter.ofPattern("h:m:s"))
+                                                            .toString())
                                                     }
 
+                                                    Spacer(Modifier.height(20.dp))
+                                                    OutLinedButton(
+                                                        text = "عرض الطلب"
+                                                    ) {    val intent = Intent(
+                                                        this@OrdersActivity,
+                                                        OrderStatusActivity::class.java
+                                                    )
+                                                        intent.putExtra(
+                                                            "order_id",
+                                                            s.id
+                                                        )
+                                                        startActivity(intent)}
+//
+                                                    Spacer(Modifier.height(20.dp))
 
-                                                    Button(onClick = {
-                                                        val intent = Intent(
-                                                            this@OrdersActivity,
-                                                            OrdersProductsActivity::class.java
-                                                        )
-                                                        intent.putExtra("order_id", s.id)
-                                                        startActivity(intent)
-//                                                            finish()
-                                                    }) {
-                                                        Text(text = "عرض منتجات الطلب",fontFamily = FontFamily(
-                                                            Font(R.font.bukra_bold)
-                                                        )
-                                                        )
-                                                    }
                                                     HorizontalDivider()
-                                                    if (s.situationId != SharedOrderStatus.ORDER_COMPLETED && s.situationId != SharedOrderStatus.ORDER_CENCELED) {
-                                                        Row(
-                                                            Modifier.fillMaxWidth(),
-                                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                                        ) {
-                                                            Text(text = "كود استلام الطلب")
-                                                            if (s.code != null)
-                                                                Text(text = s.code.toString())
-                                                        }
-                                                    }
 
                                                     Row(
                                                         Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        horizontalArrangement = Arrangement.SpaceEvenly,
                                                         verticalAlignment = Alignment.CenterVertically
                                                     ) {
                                                         Text(text = "حالة الطلب")
@@ -167,23 +179,25 @@ class OrdersActivity : ComponentActivity() {
 
                                                             else -> Text(text = "قيد المعالجة")
                                                         }
-                                                        IconButton(onClick = {
-                                                            val intent = Intent(
-                                                                this@OrdersActivity,
-                                                                OrderStatusActivity::class.java
-                                                            )
-                                                            intent.putExtra(
-                                                                "order_id",
-                                                                s.id
-                                                            )
-                                                            startActivity(intent)
-                                                        }) {
-                                                            Icon(
-                                                                imageVector = Icons.Default.Info,
-                                                                contentDescription = ""
-                                                            )
-                                                        }
+//                                                        IconButton(onClick = {
+//                                                            val intent = Intent(
+//                                                                this@OrdersActivity,
+//                                                                OrderStatusActivity::class.java
+//                                                            )
+//                                                            intent.putExtra(
+//                                                                "order_id",
+//                                                                s.id
+//                                                            )
+//                                                            startActivity(intent)
+//                                                        }) {
+//                                                            Icon(
+//                                                                imageVector = Icons.Default.Info,
+//                                                                contentDescription = ""
+//                                                            )
+//                                                        }
                                                     }
+
+                                                    Spacer(Modifier.height(20.dp))
                                                 }
                                             }
                                         }
@@ -196,5 +210,22 @@ class OrdersActivity : ComponentActivity() {
 
             }
         }
+    }
+    fun checkIfNeedUpdate() {
+        if (processStoredProducts()) return
+        readOrders()
+    }
+    private fun processStoredProducts(): Boolean {
+
+        if (ordersStorage.isSetOrders()) {
+            val diff =
+                Duration.between(ordersStorage.getOrdersDate(), getCurrentDate()).toMinutes()
+            if (diff <= 3) {
+                orders.value = ordersStorage.getOrders()
+                stateController.successState()
+                return true
+            }
+        }
+        return false
     }
 }

@@ -30,7 +30,7 @@ import com.yemen_restaurant.greenland.activities.cartController3
 class CCompose{
 
     @Composable
-    fun topBar(topBarHeight: Dp,context: Context) {
+    fun topBar(topBarHeight: Dp,context: Context ,text:String = "مطعم الارض الخضراء") {
         var size = cartController3.products.value.size + cartController3.offers.value.size
         Row (
             Modifier
@@ -41,30 +41,30 @@ class CCompose{
             verticalAlignment= Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ){
-            BadgedBox(
-                modifier = Modifier
-                    .width(40.dp)
-                    .clickable {
-                        val intent = Intent(
-                            context,
-                            CartActivity::class.java
-                        )
-                        context.startActivity(intent)
+//            BadgedBox(
+//                modifier = Modifier
+//                    .width(40.dp)
+//                    .clickable {
+//                        val intent = Intent(
+//                            context,
+//                            CartActivity::class.java
+//                        )
+//                        context.startActivity(intent)
+//
+//                    },
+//                badge = {
+//                    Text(text = size.toString()) }) {
+//                Box(
+//                    Modifier.align(Alignment.BottomEnd)
+//                ) {
+//
+//                    Icon(imageVector = Icons.Outlined.ShoppingCart, contentDescription = "" )
+//                }
+//
+//            }
 
-                    },
-                badge = {
-                    Text(text = size.toString()) }) {
-                Box(
-                    Modifier.align(Alignment.BottomEnd)
-                ) {
 
-                    Icon(imageVector = Icons.Outlined.ShoppingCart, contentDescription = "" )
-                }
-
-            }
-
-
-            Text(modifier =  Modifier.padding(5.dp) ,text = "مطعم الارض الخضراء",color = MaterialTheme.colorScheme.secondary)
+            Text(modifier =  Modifier.padding(5.dp) ,text = text,color = MaterialTheme.colorScheme.secondary)
             AsyncImage(modifier = Modifier.padding(14.dp) ,model = R.mipmap.ic_launcher_round, contentDescription ="" )
         }
 
